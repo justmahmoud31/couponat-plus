@@ -1,17 +1,13 @@
 import mongoose from "mongoose";
 import { Coupon } from "../../../../database/Models/Coupon.js"; 
-import {catchError} from "../../../Middlewares/catchError.js";
+import { validateCoupon } from "../copouns.validations.js";
+import { catchError } from "../../../Middlewares/catchError.js";
 
 const addCoupon = catchError(async (req, res, next) => {
     try {
         const { title, description, link, category_id, related_coupons } = req.body;
 
-        // Validate required fields
-        if (!title) {
-            return res.status(400).json({ success: false, message: "Title is required" });
-        }
-
-        // Construct coupon data
+        // Construct coupon data before validation
         let couponData = {
             title,
             description,
@@ -21,6 +17,12 @@ const addCoupon = catchError(async (req, res, next) => {
             image: req.files["image"] ? req.files["image"][0].path : null,
             cover_image: req.files["cover_image"] ? req.files["cover_image"][0].path : null
         };
+
+        // Validate request data using Joi
+        const { error } = validateCoupon(couponData);
+        if (error) {
+            return res.status(400).json({ success: false, errors: error.details.map(err => err.message) });
+        }
 
         // Save the coupon
         let coupon = new Coupon(couponData);
