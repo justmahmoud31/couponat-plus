@@ -1,3 +1,4 @@
+
 import mongoose from "mongoose";
 
 const ProductSchema = new mongoose.Schema({
@@ -10,7 +11,7 @@ const ProductSchema = new mongoose.Schema({
     brand_name: { type: String },
     price: { type: Number },
     discounted_price: { type: Number },
-    category_id: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
+    category_id: { type: mongoose.Schema.Types.ObjectId,ref: "Category" },
     related_product: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
 });
 export const Product = mongoose.model("Product", ProductSchema);

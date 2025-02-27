@@ -9,7 +9,7 @@ export const addproduct = catchError(async (req, res, next) => {
     try {
         const { title, description, link, code, brand_name, price, discounted_price, category_id, related_product } = req.body;
 
-        // Convert related_product and category_id to ObjectId if provided
+        // Prepare the data for validation (keep IDs as strings first)
         const productData = {
             title,
             description,
@@ -18,8 +18,8 @@ export const addproduct = catchError(async (req, res, next) => {
             brand_name,
             price,
             discounted_price,
-            category_id: category_id ? new mongoose.Types.ObjectId(category_id) : null,
-            related_product: related_product ? related_product.split(",").map(id => new mongoose.Types.ObjectId(id)) : [],
+            category_id: category_id ? String(category_id) : "", // Keep as string
+            related_product: related_product ? String(related_product).split(",") : [], // Keep as array of strings
             images: req.files["images"] ? req.files["images"].map(file => file.path) : [],
             cover_image: req.files["cover_image"] ? req.files["cover_image"][0].path : null,
         };
@@ -29,6 +29,12 @@ export const addproduct = catchError(async (req, res, next) => {
         if (error) {
             return res.status(400).json({ success: false, errors: error.details.map(err => err.message) });
         }
+
+        // Convert category_id and related_product to ObjectId **after validation**
+        productData.category_id = category_id ? new mongoose.Types.ObjectId(category_id) : null;
+        productData.related_product = related_product
+            ? related_product.split(",").map(id => new mongoose.Types.ObjectId(id))
+            : [];
 
         // Save the product
         const product = new Product(productData);
