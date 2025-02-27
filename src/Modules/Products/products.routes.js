@@ -20,5 +20,5 @@ router.patch("/editproduct/:id",
 router.post('/addproduct', mixedFiles([{ name: "images", maxCount: 5 }, { name: "cover_image", maxCount: 1 }], "products"), addproduct);
 router.get('/', getAllProducts);
 router.get('/getoneproduct/:id', getOneProduct);
-router.delete('/deleteproduct/:id', deleteProduct);
+router.delete('/deleteproduct/:id',deleteProduct);
 export default router;
