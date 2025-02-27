@@ -11,7 +11,7 @@ import { catchError } from "./catchError.js";
  */
 export const deleteOldFiles = (Model, fileFields) => catchError(async (req, res, next) => {
     const { id } = req.params;
-    
+
     // Validate MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({ message: "Invalid ID format" });
@@ -25,7 +25,8 @@ export const deleteOldFiles = (Model, fileFields) => catchError(async (req, res,
     // Helper function to delete a file
     const deleteFile = (filePath) => {
         if (filePath) {
-            const absolutePath = path.join("uploads", filePath.replace("/uploads/", ""));
+            const absolutePath = path.join(process.cwd(), filePath.replace("/uploads/", ""));
+            console.log(absolutePath);
             if (fs.existsSync(absolutePath)) {
                 fs.removeSync(absolutePath);
             }
