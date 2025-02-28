@@ -3,6 +3,8 @@ import { bootstrap } from './src/Modules/bootstrap.js';
 const app = express();
 const port = 3000;
 import { AppError } from './src/Utils/AppError.js';
+import dotenv from "dotenv";
+dotenv.config();
 app.use(express.json());
 bootstrap(app);
 import { connectDB } from './database/dbConnection.js';
