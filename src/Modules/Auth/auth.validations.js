@@ -28,10 +28,6 @@ export const validateUser = (data) => {
             "number.integer": "Points must be an integer",
             "number.min": "Points cannot be negative"
         }),
-        role: Joi.string().valid("user", "admin").required().messages({
-            "any.only": "Role must be either 'user' or 'admin'",
-            "string.empty": "Role is required"
-        })
     });
 
     return schema.validate(data, { abortEarly: false });

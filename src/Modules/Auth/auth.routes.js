@@ -1,6 +1,11 @@
 import express from 'express';
-import { login, signup } from './Controllers/auth.controllers.js';
+import { deleteUser, forgetPassword, login, resendVerificationCode, resetPassword, signup, verifyOTP } from './Controllers/auth.controllers.js';
 const router = express.Router();
 router.post('/signup', signup);
 router.post('/login', login);
+router.post('/verifyotp', verifyOTP);
+router.post('/forgetpassword', forgetPassword);
+router.post('/resetpassword', resetPassword);
+router.post('/resendotp', resendVerificationCode);
+router.delete('/deleteuser/:id', deleteUser);
 export default router;
