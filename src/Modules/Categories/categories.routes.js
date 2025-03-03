@@ -1,7 +1,7 @@
 import express from "express";
 import { singleFile } from "../../Config/multerConfig.js";
 import { addCategory } from "./Controllers/addcategory.controller.js";
-import { getAllCategories, getOneCategory } from "./Controllers/getcategory.controller.js";
+import { getAllCategories, getByBestCategory, getCategoryBySlug, getOneCategory } from "./Controllers/getcategory.controller.js";
 import { deleteOldFiles } from "../../Middlewares/deleteOldFiles.js";
 import { editCategory } from "./Controllers/editcategory.controller.js";
 import { Category } from "../../../database/Models/Category.js";
@@ -19,5 +19,7 @@ router.patch(
 );
 router.get('/', getAllCategories);
 router.get('/getonecategory/:id', getOneCategory);
+router.get('/:slug', getCategoryBySlug);
+router.get('/bybest/:best', getByBestCategory);
 router.delete('/deletecateory/:id', deleteCategory);
 export default router;

@@ -20,6 +20,7 @@ export const validateCategory = (data) => {
         ).optional().messages({
             "array.base": "Subcategories must be an array of ObjectIds",
         }),
+        best: Joi.string().optional(),
         items_count: Joi.number().integer().min(0).default(0).messages({
             "number.base": "Items count must be a number",
             "number.integer": "Items count must be an integer",

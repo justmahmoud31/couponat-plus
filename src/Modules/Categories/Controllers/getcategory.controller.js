@@ -21,4 +21,24 @@ export const getOneCategory = catchError(async (req, res, next) => {
         Message: "Success",
         oneCategory
     })
+});
+export const getCategoryBySlug = catchError(async (req, res, next) => {
+    const category = await Category.findOne({ slug: req.params.slug });
+    if (!category) {
+        return next(new AppError("Category Not Found", 404));
+    }
+    res.status(200).json({
+        Message: "Success",
+        category
+    })
+});
+export const getByBestCategory = catchError(async (req, res, next) => {
+    const category = await Category.findOne({ best: req.params.best });
+    if (!category) {
+        return next(new AppError("Category Not Found", 404));
+    }
+    res.status(200).json({
+        Message: "Success",
+        category
+    })
 })

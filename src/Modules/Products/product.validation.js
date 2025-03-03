@@ -4,10 +4,8 @@ export const validateProduct = (data) => {
     const schema = Joi.object({
         title: Joi.string().required().messages({ "string.empty": "Title is required" }),
         description: Joi.string().allow("").optional(),
-        images: Joi.array().items(Joi.string()).optional().messages({
-            "array.base": "Images must be an array of strings (file paths)",
-        }),
-        cover_image: Joi.string().optional(),
+        images:Joi.array().items(Joi.string().allow(null)).optional().allow(null),
+        cover_image: Joi.string().optional().allow(null),
         link: Joi.string().uri().allow("").optional().messages({
             "string.uri": "Link must be a valid URL",
         }),

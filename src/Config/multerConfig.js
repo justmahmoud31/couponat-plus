@@ -16,22 +16,27 @@ export const fileUpload = (folderName) => {
   ensureUploadFolderExists(folderName);
 
   const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, path.join(UPLOADS_FOLDER, folderName));
-    },
-    filename: (req, file, cb) => {
-      cb(null, uuidv4() + "-" + file.originalname);
-    },
+      destination: (req, file, cb) => {
+          console.log("Destination - File:", file); // Debugging
+          cb(null, path.join(UPLOADS_FOLDER, folderName));
+      },
+      filename: (req, file, cb) => {
+          console.log("Filename - File:", file); // Debugging
+          cb(null, uuidv4() + "-" + file.originalname);
+      },
   });
 
   function fileFilter(req, file, cb) {
-    if (file.mimetype.startsWith("image")) cb(null, true);
-    else cb(new Error("Only images are allowed!"), false);
+      console.log("File Filter - File:", file); // Debugging
+      if (file.mimetype.startsWith("image")) {
+          cb(null, true);
+      } else {
+          cb(new Error("Only images are allowed!"), false);
+      }
   }
 
-  return multer({ storage, fileFilter });
+  return multer({ storage, fileFilter, limits: { fileSize: 10 * 1024 * 1024 } }); // 10MB limit
 };
-
 export const singleFile = (fieldName, folderName) => {
   return fileUpload(folderName).single(fieldName);
 };

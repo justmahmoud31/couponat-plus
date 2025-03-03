@@ -6,12 +6,8 @@ export const validateCoupon = (data) => {
             "string.empty": "Title is required",
         }),
         description: Joi.string().allow("").optional(),
-        image: Joi.string().uri().allow("").optional().messages({
-            "string.uri": "Image must be a valid URL",
-        }),
-        cover_image: Joi.string().uri().allow("").optional().messages({
-            "string.uri": "Cover image must be a valid URL",
-        }),
+        image: Joi.string().optional().allow(null),
+        cover_image: Joi.string().optional().allow(null),
         link: Joi.string().uri().allow("").optional().messages({
             "string.uri": "Link must be a valid URL",
         }),

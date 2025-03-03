@@ -8,14 +8,14 @@ const SectionSchema = new mongoose.Schema({
     type: {
         type: String,
         enum: [
-            "stores",
-            "coupon_section",
-            "deals",
-            "banner",
-            "text",
-            "sidebar",
-            "popular_section",
-            "flat",
+            "Slider",
+            "BannerText",//*
+            "Categories",
+            "Coupons",
+            "Events",
+            "Marketing",
+            "Stores",
+            "TwoBanner"
         ],
         required: true,
     },

@@ -1,7 +1,7 @@
 import express from 'express';
 import { bootstrap } from './src/Modules/bootstrap.js';
 const app = express();
-const port = 3000;
+const port = 3001;
 import { AppError } from './src/Utils/AppError.js';
 import dotenv from "dotenv";
 dotenv.config();
