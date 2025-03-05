@@ -14,6 +14,9 @@ export const validateCoupon = (data) => {
         category_id: Joi.string().optional().messages({
             "string.base": "Category ID must be a string",
         }),
+        store_id: Joi.string().optional().messages({
+            "string.base": "Store ID must be a string",
+        }),
         related_coupons: Joi.array().items(Joi.string()).optional().messages({
             "array.base": "Related coupons must be an array of strings",
         }),

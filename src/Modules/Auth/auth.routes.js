@@ -1,5 +1,5 @@
 import express from 'express';
-import { deleteUser, forgetPassword, login, resendVerificationCode, resetPassword, signup, verifyOTP } from './Controllers/auth.controllers.js';
+import { deleteUser, forgetPassword, login, resendVerificationCode, resetPassword, signup, verifyOTP } from './Controllers/auth.controller.js';
 const router = express.Router();
 router.post('/signup', signup);
 router.post('/login', login);

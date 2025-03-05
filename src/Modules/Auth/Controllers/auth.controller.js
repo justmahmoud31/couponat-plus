@@ -38,7 +38,6 @@ export const signup = catchError(async (req, res) => {
         htmlEmail,
         true
     );
-
     // Create new user with OTP information
     const newUser = await User.create({
         username,

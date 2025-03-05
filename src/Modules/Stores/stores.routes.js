@@ -1,0 +1,13 @@
+import express from "express";
+import { singleFile } from "../../Config/multerConfig.js";
+import { addStore } from "./Controllers/addstore.controller.js";
+import { getAllStores, getOneStore } from "./Controllers/getstore.controller.js";
+import { editstore } from "./Controllers/editstore.controller.js";
+import { deleteStore } from "./Controllers/deletestore.controller.js";
+const router = express.Router();
+router.post('/', singleFile("logo", "store"), addStore);
+router.get('/', getAllStores);
+router.get('/:id', getOneStore);
+router.patch('/delete/:id', deleteStore);
+router.patch('/:id', singleFile("logo", "store"), editstore);
+export default router;

@@ -5,13 +5,14 @@ import { catchError } from "../../../Middlewares/catchError.js";
 
 const addCoupon = catchError(async (req, res, next) => {
     try {
-        const { title, description, link, category_id, related_coupons } = req.body;
+        const { title, description, link, category_id, related_coupons,store_id } = req.body;
         // Construct coupon data before validation
         let couponData = {
             title,
             description,
             link,
             category_id: category_id || undefined,
+            store_id : store_id || undefined,
             related_coupons: Array.isArray(related_coupons)
                 ? related_coupons
                 : related_coupons?.split(",") || [],

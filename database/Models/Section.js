@@ -4,12 +4,13 @@ const SectionSchema = new mongoose.Schema({
     title: { type: String, required: true },
     description: { type: String },
     banner_id: { type: mongoose.Schema.Types.ObjectId, ref: "Banner" },
+    store_id :{type : mongoose.Schema.Types.ObjectId,ref:"Store"},
     text: { type: String },
     type: {
         type: String,
         enum: [
             "Slider",
-            "BannerText",//*
+            "BannerText",
             "Categories",
             "Coupons",
             "Events",
