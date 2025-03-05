@@ -198,28 +198,28 @@ export const resendVerificationCode = catchError(async (req, res) => {
 
 export const forgetPassword = catchError(async (req, res) => {
     const { email } = req.body;
-    
+
     // Validate input
     if (!email) {
         return res.status(400).json({ success: false, message: "Email is required" });
     }
-    
+
     const user = await User.findOne({ email });
     if (!user) {
         return res.status(401).json({ success: false, message: "Invalid email or user does not exist" });
     }
-    
+
     // Generate OTP for password reset
     const { otp, otpExpiry } = generateOTP();
-    
+
     // Update user with password reset OTP
     user.otp = otp;
     user.otpExpiry = otpExpiry;
     await user.save();
-    
+
     // Create HTML email content
     const htmlEmail = createPasswordResetEmail(user.username, otp);
-    
+
     // Send OTP email
     await sendEmail(
         user.email,
@@ -227,7 +227,7 @@ export const forgetPassword = catchError(async (req, res) => {
         htmlEmail,
         true
     );
-    
+
     return res.status(200).json({
         success: true,
         message: "Password reset code has been sent to your email",
@@ -237,47 +237,78 @@ export const forgetPassword = catchError(async (req, res) => {
 
 export const resetPassword = catchError(async (req, res) => {
     const { userId, otp, newPassword } = req.body;
-    
+
     // Validate input
     if (!userId || !otp || !newPassword) {
-        return res.status(400).json({ 
-            success: false, 
-            message: "User ID, OTP, and new password are required" 
+        return res.status(400).json({
+            success: false,
+            message: "User ID, OTP, and new password are required"
         });
     }
-    
+
     // Find user by ID
     const user = await User.findById(userId);
     if (!user) {
-        return res.status(404).json({ 
-            success: false, 
-            message: "User not found" 
+        return res.status(404).json({
+            success: false,
+            message: "User not found"
         });
     }
-    
+
     // Check if OTP matches and is not expired
     if (user.otp !== otp || new Date() > user.otpExpiry) {
-        return res.status(400).json({ 
-            success: false, 
-            message: "Invalid or expired reset code" 
+        return res.status(400).json({
+            success: false,
+            message: "Invalid or expired reset code"
         });
     }
-    
+
     // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    
+
     // Update password and clear OTP fields
     user.password = hashedPassword;
     user.otp = undefined;
     user.otpExpiry = undefined;
     await user.save();
-    
-    return res.status(200).json({ 
-        success: true, 
-        message: "Password has been reset successfully" 
+
+    return res.status(200).json({
+        success: true,
+        message: "Password has been reset successfully"
     });
 });
+export const addAdmin = catchError(async (req, res, next) => {
+    const { username, email, password, phoneNumber } = req.body;
+    console.log(req.body);
+    
+    // Validate user input
+    const { error } = validateUser({ username, email, password, phoneNumber });
+    if (error) {
+        return res.status(400).json({ success: false, message: error.details.map(err => err.message) });
+    }
 
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+        return res.status(400).json({ success: false, message: "Email already exists" });
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    // Create new user with OTP information
+    const newUser = await User.create({
+        username,
+        email,
+        password: hashedPassword,
+        phoneNumber,
+        isVerified: true,
+        role: "admin"
+    });
+
+    return res.status(201).json({
+        success: true,
+        message: "Admin Added successfully",
+        userId: newUser._id
+    });
+})
 export const deleteUser = catchError(async (req, res, next) => {
     const { id } = req.params;
     const user = await User.findByIdAndDelete(id);

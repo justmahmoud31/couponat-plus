@@ -1,7 +1,8 @@
 import jwt from 'jsonwebtoken';
-import { User } from '../../../../database/Models/User.js';
+
 import { catchError } from './catchError.js';
 import { AppError } from '../Utils/AppError.js';
+import { User } from '../../database/Models/User.js';
 
 /**
  * Middleware to check if user is authenticated
