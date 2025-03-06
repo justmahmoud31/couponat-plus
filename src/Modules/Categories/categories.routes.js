@@ -6,13 +6,16 @@ import { deleteOldFiles } from "../../Middlewares/deleteOldFiles.js";
 import { editCategory } from "./Controllers/editcategory.controller.js";
 import { Category } from "../../../database/Models/Category.js";
 import { deleteCategory } from "./Controllers/deletecategory.controller.js";
+import { authorizeRoles, isAuthenticated } from "../../Middlewares/auth.middleware.js";
 
 
 const router = express.Router();
 
-router.post("/addcategory", singleFile("image", "categories"), addCategory);
+router.post("/addcategory", isAuthenticated, authorizeRoles("admin"), singleFile("image", "categories"), addCategory);
 router.patch(
     "/editcategory/:id",
+    isAuthenticated,
+    authorizeRoles("admin"),
     deleteOldFiles(Category, { image: "image" }), // Deletes old image if a new one is uploaded
     singleFile("image", "categories"), // Handles new file upload
     editCategory
@@ -21,5 +24,5 @@ router.get('/', getAllCategories);
 router.get('/getonecategory/:id', getOneCategory);
 router.get('/:slug', getCategoryBySlug);
 router.get('/bybest/:best', getByBestCategory);
-router.delete('/deletecateory/:id', deleteCategory);
+router.delete('/deletecateory/:id', isAuthenticated, authorizeRoles("admin"), deleteCategory);
 export default router;

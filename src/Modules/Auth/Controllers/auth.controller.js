@@ -106,18 +106,18 @@ export const login = catchError(async (req, res) => {
 });
 
 export const verifyOTP = catchError(async (req, res) => {
-    const { userId, otp } = req.body;
+    const { email, otp } = req.body;
 
     // Validate input
-    if (!userId || !otp) {
+    if (!email || !otp) {
         return res.status(400).json({
             success: false,
-            message: "User ID and OTP are required"
+            message: "Email and OTP are required"
         });
     }
 
     // Find user by ID
-    const user = await User.findById(userId);
+    const user = await User.findOne({email});
     if (!user) {
         return res.status(404).json({
             success: false,
@@ -279,8 +279,6 @@ export const resetPassword = catchError(async (req, res) => {
 });
 export const addAdmin = catchError(async (req, res, next) => {
     const { username, email, password, phoneNumber } = req.body;
-    console.log(req.body);
-    
     // Validate user input
     const { error } = validateUser({ username, email, password, phoneNumber });
     if (error) {
