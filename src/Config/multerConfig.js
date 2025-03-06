@@ -17,17 +17,14 @@ export const fileUpload = (folderName) => {
 
   const storage = multer.diskStorage({
       destination: (req, file, cb) => {
-          console.log("Destination - File:", file); // Debugging
           cb(null, path.join(UPLOADS_FOLDER, folderName));
       },
       filename: (req, file, cb) => {
-          console.log("Filename - File:", file); // Debugging
           cb(null, uuidv4() + "-" + file.originalname);
       },
   });
 
   function fileFilter(req, file, cb) {
-      console.log("File Filter - File:", file); // Debugging
       if (file.mimetype.startsWith("image")) {
           cb(null, true);
       } else {

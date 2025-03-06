@@ -6,16 +6,15 @@ import { validateCategory } from "../categories.validation.js";
 export const addCategory = catchError(async (req, res, next) => {
     const { name, parent_id, sub_categories, items_count, count, best } = req.body;
 
-    // Uploaded file path (if exists)
     const image = req.file ? req.file.path : null;
 
-    // Validate input data
     const { error } = validateCategory({ name, parent_id, sub_categories, items_count, count, image, best });
     if (error) {
         return res.status(400).json({ success: false, message: error.details.map(err => err.message) });
     }
+
     const slug = slugify(name);
-    // Create new category
+
     const category = new Category({
         name,
         slug,
@@ -27,8 +26,16 @@ export const addCategory = catchError(async (req, res, next) => {
         count: count || 0,
     });
 
-    // Save category in the database
     await category.save();
 
+    // If parent_id exists, push this category into parent's sub_categories
+    if (parent_id) {
+        await Category.findByIdAndUpdate(
+            parent_id,
+            { $push: { sub_categories: category._id } },
+            { new: true }
+        );
+    }
+
     return res.status(201).json({ success: true, message: "Category added successfully", category });
-})
+});
