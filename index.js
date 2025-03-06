@@ -3,11 +3,13 @@ import { bootstrap } from './src/Modules/bootstrap.js';
 const app = express();
 const port = 3001;
 import { AppError } from './src/Utils/AppError.js';
+import { connectDB } from './database/dbConnection.js';
 import dotenv from "dotenv";
+import cors from 'cors';
 dotenv.config();
 app.use(express.json());
+app.use(cors());
 bootstrap(app);
-import { connectDB } from './database/dbConnection.js';
 app.get('/', (req, res) => res.send('Hello World!'))
 connectDB();
 app.get('*', (req, res, next) => {

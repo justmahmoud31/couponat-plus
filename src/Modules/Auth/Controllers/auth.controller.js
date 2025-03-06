@@ -117,7 +117,7 @@ export const verifyOTP = catchError(async (req, res) => {
     }
 
     // Find user by ID
-    const user = await User.findOne({email});
+    const user = await User.findOne({ email });
     if (!user) {
         return res.status(404).json({
             success: false,
@@ -236,10 +236,10 @@ export const forgetPassword = catchError(async (req, res) => {
 });
 
 export const resetPassword = catchError(async (req, res) => {
-    const { userId, otp, newPassword } = req.body;
+    const { email, otp, newPassword } = req.body;
 
     // Validate input
-    if (!userId || !otp || !newPassword) {
+    if (!email || !otp || !newPassword) {
         return res.status(400).json({
             success: false,
             message: "User ID, OTP, and new password are required"
@@ -247,7 +247,7 @@ export const resetPassword = catchError(async (req, res) => {
     }
 
     // Find user by ID
-    const user = await User.findById(userId);
+    const user = await User.findOne({ email });
     if (!user) {
         return res.status(404).json({
             success: false,
