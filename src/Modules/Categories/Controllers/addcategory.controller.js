@@ -13,6 +13,16 @@ export const addCategory = catchError(async (req, res, next) => {
         return res.status(400).json({ success: false, message: error.details.map(err => err.message) });
     }
 
+    let parentCategory = null;
+
+    // ✅ Validate parent_id if provided
+    if (parent_id) {
+        parentCategory = await Category.findById(parent_id);
+        if (!parentCategory) {
+            return res.status(400).json({ success: false, message: "Parent category not found." });
+        }
+    }
+
     const slug = slugify(name);
 
     const category = new Category({
@@ -28,14 +38,24 @@ export const addCategory = catchError(async (req, res, next) => {
 
     await category.save();
 
-    // If parent_id exists, push this category into parent's sub_categories
+    let populatedParentCategory = null;
+
+    // ✅ Add this category to parent's sub_categories and fetch updated parent with populated subcategories
     if (parent_id) {
         await Category.findByIdAndUpdate(
             parent_id,
             { $push: { sub_categories: category._id } },
             { new: true }
         );
+
+        populatedParentCategory = await Category.findById(parent_id)
+            .populate('sub_categories');
     }
 
-    return res.status(201).json({ success: true, message: "Category added successfully", category });
+    return res.status(201).json({
+        success: true,
+        message: "Category added successfully",
+        category,
+        parentCategory: populatedParentCategory // Will be null if no parent_id provided
+    });
 });

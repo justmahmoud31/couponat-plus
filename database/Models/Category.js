@@ -12,5 +12,5 @@ const CategorySchema = new mongoose.Schema({
     sub_categories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],
     items_count: { type: Number, default: 0 },
     count: { type: Number, default: 0 },
-});
+},{ timestamps: true });
 export const Category = mongoose.model("Category", CategorySchema);
