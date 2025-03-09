@@ -2,15 +2,16 @@ import { Coupon } from "../../../../database/Models/Coupon.js";
 import { catchError } from "../../../Middlewares/catchError.js";
 import { AppError } from "../../../Utils/AppError.js";
 const getAllCopouns = catchError(async (req, res, next) => {
-    const allCopouns = await Coupon.find();
-    const copounsCount = allCopouns.length;
-    res.status(200).json({
-        Message: "Copouns retrived Successfully",
-        copounsCount,
-        allCopouns
+    const allCoupons = await Coupon.find().sort({ createdAt: -1 }); // Sorting by newest first
+    const couponsCount = allCoupons.length;
 
-    })
+    res.status(200).json({
+        message: "Coupons retrieved successfully",
+        couponsCount,
+        allCoupons
+    });
 });
+
 const getOneCopoun = catchError(async (req, res, next) => {
     const { id } = req.params;
 

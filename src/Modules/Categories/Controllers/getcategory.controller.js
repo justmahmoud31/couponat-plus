@@ -3,9 +3,8 @@ import { catchError } from "../../../Middlewares/catchError.js";
 import { AppError } from "../../../Utils/AppError.js";
 
 export const getAllCategories = catchError(async (req, res, next) => {
-    const allCategories = await Category.find().select('-sub_categories');
+    const allCategories = await Category.find().select('-sub_categories').sort({ createdAt: -1 });
     const categoriesCount = allCategories.length;
-
     res.status(200).json({
         message: "All Categories retrieved successfully",
         categoriesCount,

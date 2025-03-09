@@ -3,7 +3,7 @@ import { catchError } from "../../../Middlewares/catchError.js";
 import { AppError } from "../../../Utils/AppError.js";
 
 export const getAllProducts = catchError(async (req, res, next) => {
-    const allProducts = await Product.find();
+    const allProducts = await Product.find().sort({ createdAt: -1 });
     const productsCount = allProducts.length;
     res.status(200).json({
         Message: "Products Retrived Succefully",
