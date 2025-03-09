@@ -16,7 +16,6 @@ const deleteBanner = catchError(async (req, res, next) => {
     if (banner.images && banner.images.length > 0) {
         banner.images.forEach((imagePath) => {
             const fullPath = path.join(process.cwd(), imagePath); // Get absolute path
-            
             // Check if file exists before deleting
             if (fs.existsSync(fullPath)) {
                 fs.unlinkSync(fullPath);

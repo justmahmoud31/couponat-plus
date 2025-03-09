@@ -5,6 +5,13 @@ export const validateCoupon = (data) => {
         title: Joi.string().required().messages({
             "string.empty": "Title is required",
         }),
+        code: Joi.string().required().messages({
+            "string.base": "Code is Required"
+        }),
+        type: Joi.string().required().messages({
+            "string.base": "Type is Required"
+        }),
+        expireDate : Joi.date().optional(),
         description: Joi.string().allow("").optional(),
         image: Joi.string().optional().allow(null),
         cover_image: Joi.string().optional().allow(null),

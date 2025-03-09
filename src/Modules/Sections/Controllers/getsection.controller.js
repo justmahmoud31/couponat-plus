@@ -19,4 +19,5 @@ const getSection = catchError(async (req, res, next) => {
         sections,
     });
 });
+
 export default { getSection };
