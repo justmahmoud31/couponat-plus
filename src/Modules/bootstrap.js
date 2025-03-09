@@ -5,6 +5,7 @@ import authRouter from './Auth/auth.routes.js';
 import storeRouter from './Stores/stores.routes.js'
 import sectionRouter from './Sections/section.routes.js';
 import bannerRouter from './Banners/banner.routes.js';
+import rateRouter from './Rate/rate.routes.js';
 export const bootstrap = (app) => {
     app.use('/api/coupons', couponRouter);
     app.use('/api/products', productRouter);
@@ -13,4 +14,5 @@ export const bootstrap = (app) => {
     app.use('/api/store', storeRouter);
     app.use('/api/section', sectionRouter);
     app.use('/api/banner', bannerRouter);
+    app.use('/api/rate', rateRouter);
 }

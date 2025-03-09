@@ -242,7 +242,7 @@ export const resetPassword = catchError(async (req, res) => {
     if (!email || !otp || !newPassword) {
         return res.status(400).json({
             success: false,
-            message: "User ID, OTP, and new password are required"
+            message: "Email , OTP, and new password are required"
         });
     }
 
