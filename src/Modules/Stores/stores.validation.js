@@ -26,16 +26,6 @@ export const storeValidationSchema = Joi.object({
       'string.uri': 'Invalid URL format',
       'any.required': 'URL is required'
     }),
-
-  rate: Joi.number()
-    .min(0)
-    .max(5)
-    .default(0)
-    .messages({
-      'number.min': 'Rate must be at least 0',
-      'number.max': 'Rate must be at most 5'
-    }),
-
   categories: Joi.array()
     .items(Joi.string())
     .optional(),

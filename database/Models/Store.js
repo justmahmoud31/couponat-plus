@@ -27,12 +27,10 @@ const StoreSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Coupon"
   }],
-  rate: {
-    type: Number,
-    min: 0,
-    max: 5,
-    default: 0
-  },
+  rates: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Rate"
+  }],
   numberOfCoupons: {
     type: Number,
     default: 0

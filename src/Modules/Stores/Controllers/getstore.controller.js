@@ -30,7 +30,7 @@ export const getOneStore = catchError(async (req, res, next) => {
     if (!oneStore) {
         return next(new AppError("Store Not Found", 404));
     }
-    await oneStore.populate(['categories', 'coupons']);
+    await oneStore.populate(['categories', 'coupons', 'rates']);
     res.status(200).json({
         Message: "Success",
         oneStore

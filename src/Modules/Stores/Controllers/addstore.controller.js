@@ -37,7 +37,6 @@ export const addStore = catchError(async (req, res, next) => {
         link,
         categories = [],
         coupons = [],
-        rate = 0
     } = req.body;
 
     const newStore = new Store({
@@ -46,8 +45,7 @@ export const addStore = catchError(async (req, res, next) => {
         link,
         logo: req.file.path,
         categories,
-        coupons,
-        rate
+        coupons
     });
 
     const savedStore = await newStore.save();
