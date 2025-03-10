@@ -235,18 +235,16 @@ export const forgetPassword = catchError(async (req, res) => {
     });
 });
 
-export const resetPassword = catchError(async (req, res) => {
-    const { email, otp, newPassword } = req.body;
+export const verifyForgetPasswordOtp = catchError(async (req, res) => {
+    const { email, otp } = req.body;
 
-    // Validate input
-    if (!email || !otp || !newPassword) {
+    if (!email || !otp) {
         return res.status(400).json({
             success: false,
-            message: "Email , OTP, and new password are required"
+            message: "Email and OTP are required"
         });
     }
 
-    // Find user by ID
     const user = await User.findOne({ email });
     if (!user) {
         return res.status(404).json({
@@ -255,18 +253,45 @@ export const resetPassword = catchError(async (req, res) => {
         });
     }
 
-    // Check if OTP matches and is not expired
-    if (user.otp !== otp || new Date() > user.otpExpiry) {
+    if (!user.isVerified) {
         return res.status(400).json({
             success: false,
-            message: "Invalid or expired reset code"
+            message: "User is not verified"
         });
     }
 
-    // Hash new password
+    if (user.otp !== otp || new Date() > user.otpExpiry) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid or expired OTP"
+        });
+    }
+
+    return res.status(200).json({
+        success: true,
+        message: "OTP verified successfully"
+    });
+});
+export const resetPassword = catchError(async (req, res) => {
+    const { email, newPassword } = req.body;
+
+    if (!email || !newPassword) {
+        return res.status(400).json({
+            success: false,
+            message: "Email and new password are required"
+        });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: "User not found"
+        });
+    }
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update password and clear OTP fields
     user.password = hashedPassword;
     user.otp = undefined;
     user.otpExpiry = undefined;
