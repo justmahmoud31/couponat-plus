@@ -11,10 +11,6 @@ export const validateRate = (data) => {
             "string.base": "Store ID must be a string",
             "any.required": "Store ID is required",
         }),
-        user_id: Joi.string().required().messages({
-            "string.base": "User ID must be a string",
-            "any.required": "User ID is required",
-        }),
     });
 
     return schema.validate(data, { abortEarly: false });

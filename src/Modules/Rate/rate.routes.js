@@ -5,9 +5,9 @@ import { deleteRate } from './Controllers/delete.controller.js';
 import { authorizeRoles, isAuthenticated } from '../../Middlewares/auth.middleware.js';
 const router = express.Router();
 
-router.post("/", isAuthenticated,  createRate);
-router.get("/", getAllRates);
-router.get("/:id", getRateById);
-router.delete("/:id", deleteRate);
+router.post("/", isAuthenticated, createRate);
+router.get("/", isAuthenticated, authorizeRoles("admin"), getAllRates);
+router.get("/:id", isAuthenticated, authorizeRoles("admin"), getRateById);
+router.delete("/:id", isAuthenticated, deleteRate);
 
 export default router;

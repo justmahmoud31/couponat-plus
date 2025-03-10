@@ -8,27 +8,29 @@ import { User } from '../../database/Models/User.js';
  * Middleware to check if user is authenticated
  */
 export const isAuthenticated = catchError(async (req, res, next) => {
-    // Get token from request headers
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return next(new AppError('Authentication required. Please login.', 401));
     }
-    
+
     const token = authHeader.split(' ')[1];
-    
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    // Find user by id
-    const user = await User.findById(decoded.id);
+
+    let decoded;
+    try {
+        decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (error) {
+        return next(new AppError('Invalid token. Please login again.', 401));
+    }
+    const user = await User.findById(decoded.id); // Use _id here
     if (!user) {
         return next(new AppError('User belonging to this token no longer exists.', 401));
     }
-    
-    // Add user to request object
-    req.user = user;
+
+    // Convert _id to string to avoid mismatches in queries
+    req.user = { ...user.toObject(), _id: user._id.toString() };
     next();
 });
+
 
 /**
  * Middleware to check user roles

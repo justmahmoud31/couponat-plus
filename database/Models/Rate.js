@@ -15,8 +15,7 @@ const rateSchema = mongoose.Schema({
     },
     user_id: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "user",
-        required: true
+        ref: "User",
     }
 }, {
     timestamps: true
