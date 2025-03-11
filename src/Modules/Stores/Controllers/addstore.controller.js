@@ -3,41 +3,23 @@ import { catchError } from "../../../Middlewares/catchError.js";
 import { validateStore } from "../stores.validation.js";
 
 export const addStore = catchError(async (req, res, next) => {
-
     if (!req.file) {
         return res.status(400).json({ message: 'Store logo is required' });
     }
 
-    // Parse arrays first
-    if (req.body.categories) {
-        try {
-            req.body.categories = JSON.parse(req.body.categories);
-        } catch (err) {
-            return res.status(400).json({ message: 'Invalid JSON format in categories' });
-        }
+    try {
+        req.body.categories = req.body.categories ? JSON.parse(req.body.categories) : [];
+        req.body.coupons = req.body.coupons ? JSON.parse(req.body.coupons) : [];
+    } catch (err) {
+        return res.status(400).json({ message: 'Invalid JSON format in categories or coupons' });
     }
 
-    if (req.body.coupons) {
-        try {
-            req.body.coupons = JSON.parse(req.body.coupons);
-        } catch (err) {
-            return res.status(400).json({ message: 'Invalid JSON format in coupons' });
-        }
-    }
-
-    // Validate
     const { error } = validateStore(req.body);
     if (error) {
         return res.status(400).json({ errors: error.details.map(e => e.message) });
     }
 
-    const {
-        name,
-        description,
-        link,
-        categories = [],
-        coupons = [],
-    } = req.body;
+    const { name, description, link, categories, coupons } = req.body;
 
     const newStore = new Store({
         name,
@@ -45,15 +27,19 @@ export const addStore = catchError(async (req, res, next) => {
         link,
         logo: req.file.path,
         categories,
-        coupons
+        coupons,
     });
 
     const savedStore = await newStore.save();
 
-    await savedStore.populate(['categories', 'coupons']);
+    // Correct way to populate multiple fields
+    const populatedStore = await Store.populate(savedStore, [
+        { path: 'categories' },
+        { path: 'coupons' },
+    ]);
 
     res.status(201).json({
         message: 'Store created successfully',
-        store: savedStore
+        store: populatedStore,
     });
 });

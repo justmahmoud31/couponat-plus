@@ -26,13 +26,19 @@ export const getAllStores = catchError(async (req, res, next) => {
 
 
 export const getOneStore = catchError(async (req, res, next) => {
-    const oneStore = await Store.findById(req.params.id);
+    const oneStore = await Store.findById(req.params.id).populate([
+        { path: 'categories' },
+        { path: 'coupons' },
+        { path: 'rates' },
+    ]);
+
     if (!oneStore) {
         return next(new AppError("Store Not Found", 404));
     }
-    await oneStore.populate(['categories', 'coupons', 'rates']);
+
     res.status(200).json({
-        Message: "Success",
-        oneStore
-    })
-})
+        message: "Success",
+        oneStore,
+    });
+});
+
