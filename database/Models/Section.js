@@ -22,7 +22,7 @@ const SectionSchema = new mongoose.Schema(
             required: true,
         },
         category_id: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
-        order: { type: Number, required: true, default: 0 }, // Default order
+        order: { type: Number, required: true, default: 0 }, 
     },
     { timestamps: true }
 );

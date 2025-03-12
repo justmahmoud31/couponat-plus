@@ -19,5 +19,13 @@ const getSection = catchError(async (req, res, next) => {
         sections,
     });
 });
-
+export const getAllSections = catchError(async (req, res, next) => {
+    const allSections = await Section.find();
+    const sectionsCount = allSections.length;
+    res.status(200).json({
+        Message: "Success",
+        sectionsCount,
+        allSections
+    })
+})
 export default { getSection };
