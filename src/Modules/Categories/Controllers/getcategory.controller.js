@@ -8,7 +8,7 @@ export const getAllCategories = catchError(async (req, res, next) => {
         .sort({ createdAt: -1 })
         .populate({
             path: 'parent_id',
-            select: 'name  image', // Select specific fields from the parent, adjust as needed
+            select: 'name slug ', // Select specific fields from the parent, adjust as needed
         });
 
     const categoriesCount = allCategories.length;
