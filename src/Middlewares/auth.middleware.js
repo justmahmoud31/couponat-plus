@@ -12,7 +12,6 @@ export const isAuthenticated = catchError(async (req, res, next) => {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return next(new AppError('Authentication required. Please login.', 401));
     }
-
     const token = authHeader.split(' ')[1];
 
     let decoded;

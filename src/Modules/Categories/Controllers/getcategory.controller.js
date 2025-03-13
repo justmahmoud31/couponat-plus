@@ -22,9 +22,18 @@ export const getOneCategory = catchError(async (req, res, next) => {
                 path: 'sub_categories',
                 populate: {
                     path: 'sub_categories',
-                    // You can keep nesting as deep as you need
-                }
-            }
+                },
+            },
+        })
+        .populate({
+            path: 'parent_id',
+            // Populate sub-categories for the parent as well (optional)
+            populate: {
+                path: 'sub_categories',
+                select: 'name slug image', // Select necessary fields for optimization
+            },
+            select: 'name slug image sub_categories', // Select the required fields
+            strictPopulate: false, // Avoid errors if parent doesn't exist
         });
 
     if (!oneCategory) {
@@ -33,9 +42,10 @@ export const getOneCategory = catchError(async (req, res, next) => {
 
     res.status(200).json({
         message: "Success",
-        oneCategory
+        oneCategory,
     });
 });
+
 
 export const getCategoryBySlug = catchError(async (req, res, next) => {
     const category = await Category.findOne({ slug: req.params.slug });
