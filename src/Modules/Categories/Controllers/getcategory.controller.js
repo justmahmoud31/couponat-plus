@@ -3,14 +3,23 @@ import { catchError } from "../../../Middlewares/catchError.js";
 import { AppError } from "../../../Utils/AppError.js";
 
 export const getAllCategories = catchError(async (req, res, next) => {
-    const allCategories = await Category.find().select('-sub_categories').sort({ createdAt: -1 });
+    const allCategories = await Category.find()
+        .select('-sub_categories')
+        .sort({ createdAt: -1 })
+        .populate({
+            path: 'parent_id',
+            select: 'name  image', // Select specific fields from the parent, adjust as needed
+        });
+
     const categoriesCount = allCategories.length;
+
     res.status(200).json({
         message: "All Categories retrieved successfully",
         categoriesCount,
-        allCategories
+        allCategories,
     });
 });
+
 
 export const getOneCategory = catchError(async (req, res, next) => {
     const { id } = req.params;
