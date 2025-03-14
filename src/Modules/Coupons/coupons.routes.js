@@ -2,9 +2,9 @@ import express from 'express';
 import { addCoupon } from './Controllers/AddCopoun.controller.js';
 import { mixedFiles, singleFile } from '../../Config/multerConfig.js';
 import { getAllCopouns, getOneCopoun } from './Controllers/getCopouns.controller.js';
-import {deleteCoupon} from './Controllers/deleteCopoun.controller.js';
-import { updateCoupon } from './Controllers/editCopoun.controller.js';
+import { deleteCoupon } from './Controllers/deleteCopoun.controller.js';
 import { authorizeRoles, isAuthenticated } from '../../Middlewares/auth.middleware.js';
+import { updateCoupon } from './Controllers/editCopoun.controller.js';
 const router = express.Router();
 router.post(
     "/addcoupon",

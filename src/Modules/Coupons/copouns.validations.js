@@ -18,7 +18,7 @@ export const validateCoupon = (data) => {
         link: Joi.string().uri().allow("").optional().messages({
             "string.uri": "Link must be a valid URL",
         }),
-        category_id: Joi.string().optional().messages({
+        category_id: Joi.string().required().messages({
             "string.base": "Category ID must be a string",
         }),
         store_id: Joi.string().optional().messages({

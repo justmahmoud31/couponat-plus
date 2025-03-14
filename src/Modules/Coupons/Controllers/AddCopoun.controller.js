@@ -5,7 +5,7 @@ import { catchError } from "../../../Middlewares/catchError.js";
 
 const addCoupon = catchError(async (req, res, next) => {
     try {
-        const { title, description, link, code, type, category_id, store_id, expireDate } = req.body;
+        const { title, description, link, code, type, category_id, expireDate } = req.body;
         let couponData = {
             title,
             description,
@@ -13,7 +13,6 @@ const addCoupon = catchError(async (req, res, next) => {
             code,
             type,
             category_id: category_id || undefined,
-            store_id: store_id || undefined,
             expireDate,
             image: req.files["image"] ? req.files["image"][0].path : null,
             cover_image: req.files["cover_image"] ? req.files["cover_image"][0].path : null

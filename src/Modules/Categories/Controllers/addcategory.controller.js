@@ -1,30 +1,22 @@
 import slugify from "slugify";
 import { Category } from "../../../../database/Models/Category.js";
+import { Product } from "../../../../database/Models/Product.js";
+import { Coupon } from "../../../../database/Models/Coupon.js";
+import { Store } from "../../../../database/Models/Store.js";
 import { catchError } from "../../../Middlewares/catchError.js";
 import { validateCategory } from "../categories.validation.js";
 
 export const addCategory = catchError(async (req, res, next) => {
-    const { name, parent_id, sub_categories, items_count, count, best } = req.body;
-
+    const { name, parent_id, sub_categories, best } = req.body;
     const image = req.file ? req.file.path : null;
 
-    const { error } = validateCategory({ name, parent_id, sub_categories, items_count, count, image, best });
+    const { error } = validateCategory({ name, parent_id, sub_categories, image, best });
     if (error) {
         return res.status(400).json({ success: false, message: error.details.map(err => err.message) });
     }
 
-    let parentCategory = null;
-
-    // ✅ Validate parent_id if provided
-    if (parent_id) {
-        parentCategory = await Category.findById(parent_id);
-        if (!parentCategory) {
-            return res.status(400).json({ success: false, message: "Parent category not found." });
-        }
-    }
-
     const slug = slugify(name);
-
+    // Initialize the category without counts
     const category = new Category({
         name,
         slug,
@@ -32,30 +24,46 @@ export const addCategory = catchError(async (req, res, next) => {
         best,
         parent_id: parent_id || null,
         sub_categories: sub_categories ? JSON.parse(sub_categories) : [],
-        items_count: items_count || 0,
-        count: count || 0,
     });
 
     await category.save();
 
+    // Dynamically calculate counts
+    const [itemsCount, productCount, couponCount, storeCount] = await Promise.all([
+        Category.countDocuments({ parent_id: category._id }),
+        Product.countDocuments({ category: category._id }),
+        Coupon.countDocuments({ category: category._id }),
+        Store.countDocuments({ category: category._id }),
+    ]);
+
+    const totalCount = productCount + couponCount + storeCount;
+
+    // Update the category with dynamic counts
+    await Category.findByIdAndUpdate(category._id, {
+        items_count: itemsCount,
+        count: totalCount,
+    });
+
     let populatedParentCategory = null;
 
-    // ✅ Add this category to parent's sub_categories and fetch updated parent with populated subcategories
+    // If there's a parent category, update its sub_categories and items_count
     if (parent_id) {
-        await Category.findByIdAndUpdate(
+        const updatedParent = await Category.findByIdAndUpdate(
             parent_id,
-            { $push: { sub_categories: category._id } },
+            { 
+                $addToSet: { sub_categories: category._id }, 
+                $inc: { items_count: 1 } 
+            },
             { new: true }
-        );
-
-        populatedParentCategory = await Category.findById(parent_id)
-            .populate('sub_categories');
+        ).populate('sub_categories');
+        
+        populatedParentCategory = updatedParent;
     }
 
     return res.status(201).json({
         success: true,
         message: "Category added successfully",
         category,
-        parentCategory: populatedParentCategory // Will be null if no parent_id provided
+        parentCategory: populatedParentCategory,
     });
 });

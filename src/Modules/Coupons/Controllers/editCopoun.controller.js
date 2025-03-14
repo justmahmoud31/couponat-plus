@@ -4,7 +4,7 @@ import { Coupon } from "../../../../database/Models/Coupon.js";
 import { validateCoupon } from "../copouns.validations.js";
 import { catchError } from "../../../Middlewares/catchError.js";
 
-export const updateCoupon = catchError(async (req, res, next) => {
+export const updateCoupon = catchError(async (req, res, next) => {    
     const { id } = req.params;
     let updateData = req.body;
 
@@ -30,10 +30,6 @@ export const updateCoupon = catchError(async (req, res, next) => {
     if (updateData.category_id) {
         updateData.category_id = new mongoose.Types.ObjectId(updateData.category_id);
     }
-    if (updateData.related_coupons) {
-        updateData.related_coupons = updateData.related_coupons.split(",").map(id => new mongoose.Types.ObjectId(id));
-    }
-
     // Validate updated data using Joi
     const { error } = validateCoupon(updateData);
     if (error) {
