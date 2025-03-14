@@ -2,7 +2,7 @@ import express from 'express';
 import { addCoupon } from './Controllers/AddCopoun.controller.js';
 import { mixedFiles, singleFile } from '../../Config/multerConfig.js';
 import { getAllCopouns, getOneCopoun } from './Controllers/getCopouns.controller.js';
-import { deleteCoupon } from './Controllers/deleteCopoun.controller.js';
+import { deleteCoupon, deleteOneCoupon } from './Controllers/deleteCopoun.controller.js';
 import { authorizeRoles, isAuthenticated } from '../../Middlewares/auth.middleware.js';
 import { updateCoupon } from './Controllers/editCopoun.controller.js';
 const router = express.Router();
@@ -16,5 +16,6 @@ router.post(
 router.get('/', getAllCopouns)
 router.get('/onecopoun/:id', getOneCopoun);
 router.delete('/deletecopoun', isAuthenticated, authorizeRoles("admin"), deleteCoupon);
+router.delete('/deletecopoun/:id', isAuthenticated, authorizeRoles("admin"), deleteOneCoupon);
 router.patch("/editcoupon/:id", isAuthenticated, authorizeRoles("admin"), singleFile("image", "coupons"), updateCoupon);
 export default router;

@@ -1,4 +1,5 @@
 import { Coupon } from "../../../../database/Models/Coupon.js";
+import { Category } from "../../../../database/Models/Category.js";
 import { catchError } from "../../../Middlewares/catchError.js";
 import { AppError } from "../../../Utils/AppError.js";
 import fs from "fs";
@@ -13,8 +14,45 @@ const deleteImage = (filePath) => {
     }
 };
 
-const deleteCoupon = catchError(async (req, res, next) => {
+export const deleteOneCoupon = catchError(async (req, res, next) => {
     const { id } = req.params;
+
+    if (!id) {
+        return next(new AppError("Coupon Id is required", 400));
+    }
+
+    const coupon = await Coupon.findById(id);
+    if (!coupon) {
+        return next(new AppError("Coupon Not Found", 404));
+    }
+
+    // Delete coupon images
+    deleteImage(coupon.image);
+    deleteImage(coupon.cover_image);
+
+    // Delete the coupon
+    await Coupon.findByIdAndDelete(id);
+
+    // Update the related category's count
+    if (coupon.category) {
+        const totalCoupons = await Coupon.countDocuments({ category: coupon.category });
+        const totalProducts = await Category.countDocuments({ category: coupon.category });
+        const totalStores = await Category.countDocuments({ category: coupon.category });
+
+        const totalCount = totalProducts + totalCoupons + totalStores;
+
+        await Category.findByIdAndUpdate(coupon.category, {
+            count: totalCount,
+        });
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Coupon deleted successfully",
+    });
+});
+
+const deleteCoupon = catchError(async (req, res, next) => {
     const { ids } = req.body;
 
     if (ids && Array.isArray(ids) && ids.length > 0) {
@@ -39,7 +77,6 @@ const deleteCoupon = catchError(async (req, res, next) => {
             message: `${result.deletedCount} coupons deleted successfully.`,
         });
     }
-
     if (id) {
         // ✅ Find coupon first to delete images
         const coupon = await Coupon.findByIdAndDelete(id);

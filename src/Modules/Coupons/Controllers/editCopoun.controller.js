@@ -3,8 +3,9 @@ import path from "path";
 import { Coupon } from "../../../../database/Models/Coupon.js";
 import { validateCoupon } from "../copouns.validations.js";
 import { catchError } from "../../../Middlewares/catchError.js";
+import mongoose from "mongoose";
 
-export const updateCoupon = catchError(async (req, res, next) => {    
+export const updateCoupon = catchError(async (req, res, next) => {
     const { id } = req.params;
     let updateData = req.body;
 
@@ -26,14 +27,15 @@ export const updateCoupon = catchError(async (req, res, next) => {
         updateData.image = req.file.filename; // Save new image filename
     }
 
-    // Convert related_coupons and category_id to correct types
-    if (updateData.category_id) {
-        updateData.category_id = new mongoose.Types.ObjectId(updateData.category_id);
-    }
-    // Validate updated data using Joi
+    // Validate updated data using Joi (before ObjectId conversion)
     const { error } = validateCoupon(updateData);
     if (error) {
         return res.status(400).json({ success: false, errors: error.details.map(err => err.message) });
+    }
+
+    // Convert category_id to ObjectId if it's provided and not an empty string
+    if (updateData.category_id && mongoose.Types.ObjectId.isValid(updateData.category_id)) {
+        updateData.category_id = new mongoose.Types.ObjectId(updateData.category_id);
     }
 
     // Update the coupon

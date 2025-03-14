@@ -2,7 +2,8 @@ import { Coupon } from "../../../../database/Models/Coupon.js";
 import { catchError } from "../../../Middlewares/catchError.js";
 import { AppError } from "../../../Utils/AppError.js";
 const getAllCopouns = catchError(async (req, res, next) => {
-    const allCoupons = await Coupon.find().sort({ createdAt: -1 }); // Sorting by newest first
+    
+    const allCoupons = await Coupon.find().sort({ createdAt: -1 }); 
     const couponsCount = allCoupons.length;
 
     res.status(200).json({
