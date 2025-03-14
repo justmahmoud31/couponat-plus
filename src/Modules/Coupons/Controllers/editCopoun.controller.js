@@ -24,7 +24,7 @@ export const updateCoupon = catchError(async (req, res, next) => {
                 await fs.unlink(oldImagePath);
             }
         }
-        updateData.image = req.file.filename; // Save new image filename
+        updateData.image = `uploads/coupons/${req.file.filename}`; // Save new image filename
     }
 
     // Validate updated data using Joi (before ObjectId conversion)

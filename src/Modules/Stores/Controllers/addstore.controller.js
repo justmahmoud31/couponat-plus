@@ -10,8 +10,9 @@ export const addStore = catchError(async (req, res, next) => {
     try {
         req.body.categories = req.body.categories ? JSON.parse(req.body.categories) : [];
         req.body.coupons = req.body.coupons ? JSON.parse(req.body.coupons) : [];
+        req.body.products = req.body.products ? JSON.parse(req.body.products) : [];
     } catch (err) {
-        return res.status(400).json({ message: 'Invalid JSON format in categories or coupons' });
+        return res.status(400).json({ message: 'Invalid JSON format in categories, coupons, or products' });
     }
 
     const { error } = validateStore(req.body);
@@ -19,7 +20,7 @@ export const addStore = catchError(async (req, res, next) => {
         return res.status(400).json({ errors: error.details.map(e => e.message) });
     }
 
-    const { name, description, link, categories, coupons } = req.body;
+    const { name, description, link, categories, coupons, products } = req.body;
 
     const newStore = new Store({
         name,
@@ -27,16 +28,17 @@ export const addStore = catchError(async (req, res, next) => {
         link,
         logo: req.file.path,
         categories,
-        coupons,
+        coupons,   // ✅ Now saving products & coupons properly
+        products,
     });
 
-    const savedStore = await newStore.save();
+    await newStore.save();
 
-    // Correct way to populate multiple fields
-    const populatedStore = await Store.populate(savedStore, [
-        { path: 'categories' },
-        { path: 'coupons' },
-    ]);
+    // ✅ Fetch the store again with population to get full details
+    const populatedStore = await Store.findById(newStore._id)
+        .populate('categories')
+        .populate('coupons')
+        .populate('products');
 
     res.status(201).json({
         message: 'Store created successfully',

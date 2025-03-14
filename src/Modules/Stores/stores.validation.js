@@ -32,12 +32,15 @@ export const storeValidationSchema = Joi.object({
 
   coupons: Joi.array()
     .items(Joi.string())
+    .optional(),
+  products: Joi.array()
+    .items(Joi.string())
     .optional()
 });
 
 export const validateStore = (data) => {
-  return storeValidationSchema.validate(data, { 
-    abortEarly: false, 
-    convert: true 
+  return storeValidationSchema.validate(data, {
+    abortEarly: false,
+    convert: true
   });
 };

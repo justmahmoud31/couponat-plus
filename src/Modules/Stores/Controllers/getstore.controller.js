@@ -30,6 +30,7 @@ export const getOneStore = catchError(async (req, res, next) => {
         { path: 'categories' },
         { path: 'coupons' },
         { path: 'rates' },
+        { path: 'products' },  // Added products population
     ]);
 
     if (!oneStore) {
@@ -41,4 +42,5 @@ export const getOneStore = catchError(async (req, res, next) => {
         oneStore,
     });
 });
+
 

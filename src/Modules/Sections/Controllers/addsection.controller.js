@@ -1,22 +1,23 @@
+
 import { Section } from "../../../../database/Models/Section.js";
 import { catchError } from "../../../Middlewares/catchError.js";
+import { sectionValidation } from "../section.validation.js";
 
 const addSection = catchError(async (req, res, next) => {
-    const { title, description, banner_id, store_id, text, type, category_id, order } = req.body;
+    const { error } = sectionValidation.validate(req.body);
 
-    // Validate required fields
-    if (!title || !type) {
-        return res.status(400).json({ message: "Title and type are required" });
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
     }
 
-    // Get the highest order value and increment it if order is not provided
+    const { title, description, banner_id, store_id, text, type, category_id, product_id, order, items } = req.body;
+
     let newOrder = order;
     if (newOrder === undefined) {
-        const lastSection = await Section.findOne().sort({ order: -1 }); // Get the highest order
-        newOrder = lastSection ? lastSection.order + 1 : 1; // Set order dynamically
+        const lastSection = await Section.findOne().sort({ order: -1 });
+        newOrder = lastSection ? lastSection.order + 1 : 1;
     }
 
-    // Create the new section
     const newSection = new Section({
         title,
         description,
@@ -25,10 +26,11 @@ const addSection = catchError(async (req, res, next) => {
         text,
         type,
         category_id,
-        order: newOrder
+        product_id,
+        items: items || [],
+        order: newOrder,
     });
 
-    // Save to the database
     await newSection.save();
 
     res.status(201).json({
@@ -36,4 +38,5 @@ const addSection = catchError(async (req, res, next) => {
         section: newSection,
     });
 });
+
 export { addSection };

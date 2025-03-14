@@ -22,6 +22,14 @@ const StoreSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Category",
     }],
+    coupons: [{   // ✅ Add coupons field
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Coupon",
+    }],
+    products: [{  // ✅ Add products field
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
+    }],
     numberOfCoupons: {
         type: Number,
         default: 0,
@@ -32,9 +40,8 @@ const StoreSchema = new mongoose.Schema({
     },
 }, {
     timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
 });
+
 
 // Virtual populate for rates
 StoreSchema.virtual('rates', {
@@ -43,12 +50,7 @@ StoreSchema.virtual('rates', {
     foreignField: 'store_id',
 });
 
-// Virtual populate for coupons
-StoreSchema.virtual('coupons', {
-    ref: 'Coupon',
-    localField: '_id',
-    foreignField: 'store_id',
-});
+
 
 // Middleware to update numberOfCoupons when coupons are modified
 StoreSchema.pre('save', async function (next) {

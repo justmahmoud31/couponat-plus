@@ -6,6 +6,8 @@ const SectionSchema = new mongoose.Schema(
         description: { type: String },
         banner_id: { type: mongoose.Schema.Types.ObjectId, ref: "Banner" },
         store_id: { type: mongoose.Schema.Types.ObjectId, ref: "Store" },
+        product_id: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
+        event_id: { type: mongoose.Schema.Types.ObjectId, ref: "Event" },
         text: { type: String },
         type: {
             type: String,
@@ -14,6 +16,7 @@ const SectionSchema = new mongoose.Schema(
                 "BannerText",
                 "Categories",
                 "Coupons",
+                "Products",
                 "Events",
                 "Marketing",
                 "Stores",
@@ -22,7 +25,8 @@ const SectionSchema = new mongoose.Schema(
             required: true,
         },
         category_id: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
-        order: { type: Number, required: true, default: 0 }, 
+        items: [{ type: mongoose.Schema.Types.ObjectId, refPath: "type" }], // Dynamic reference based on type
+        order: { type: Number, required: true, unique: true },
     },
     { timestamps: true }
 );
