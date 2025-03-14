@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+import { Category } from "../../../../database/Models/Category.js";
 import { Store } from "../../../../database/Models/Store.js";
 import { catchError } from "../../../Middlewares/catchError.js";
 import { AppError } from "../../../Utils/AppError.js";
@@ -43,4 +45,27 @@ export const getOneStore = catchError(async (req, res, next) => {
     });
 });
 
+export const getStoresByCategory = catchError(async (req, res, next) => {
+    const { slug } = req.params;
 
+    // Find category by slug
+    const category = await Category.findOne({ slug });
+    if (!category) {
+        return res.status(404).json({ message: "Category not found" });
+    }
+
+    // Debug: Log the category ID
+    console.log("Category ID:", category._id);
+
+    // Find stores associated with this category and that are not deleted
+    const stores = await Store.find({
+        categories: new mongoose.Types.ObjectId(category._id),
+        isDeleted: false,
+    }).select("link logo numberOfCoupons");
+
+    res.status(200).json({
+        message: "Stores retrieved successfully",
+        count: stores.length,
+        stores,
+    });
+});
