@@ -26,7 +26,6 @@ export const updateCoupon = catchError(async (req, res, next) => {
         }
         updateData.image = `uploads/coupons/${req.file.filename}`; // Save new image filename
     }
-
     // Validate updated data using Joi (before ObjectId conversion)
     const { error } = validateCoupon(updateData);
     if (error) {

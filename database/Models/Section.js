@@ -20,13 +20,17 @@ const SectionSchema = new mongoose.Schema(
                 "Events",
                 "Marketing",
                 "Stores",
-                "TwoBanner"
+                "TwoBanner",
+                "bestStoresCategories",
+                "bestCouponCategories",
+                "bestDealsCategory"
             ],
             required: true,
         },
         category_id: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
         items: [{ type: mongoose.Schema.Types.ObjectId, refPath: "type" }], // Dynamic reference based on type
         order: { type: Number, required: true, unique: true },
+        isActive: { type: Boolean, default: true }
     },
     { timestamps: true }
 );
