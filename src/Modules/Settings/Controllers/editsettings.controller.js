@@ -1,19 +1,43 @@
 import fs from "fs";
-import path from "path";
 import { Settings } from "../../../../database/Models/Settings.js";
+
 const deleteFile = (filePath) => {
     if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
     }
 };
+
+// Initialize settings if none exist
+export const initializeSettings = async () => {
+    const existingSettings = await Settings.findOne();
+    if (!existingSettings) {
+        await Settings.create({});
+    }
+};
+
 export const updateSettings = async (req, res) => {
     try {
-        const { id } = req.params;
         const { name, description, emails, socialMedia, copyright } = req.body;
 
-        const existingSettings = await Settings.findById(id);
+        let existingSettings = await Settings.findOne();
+
+        // If no settings exist, create them with the provided data
         if (!existingSettings) {
-            return res.status(404).json({ message: "Settings not found" });
+            const newSettingsData = {
+                name,
+                description,
+                emails: emails ? JSON.parse(emails) : [],
+                socialMedia: socialMedia ? JSON.parse(socialMedia) : {},
+                copyright,
+                logo: req.files?.logo ? req.files.logo[0].path : undefined,
+                icon: req.files?.icon ? req.files.icon[0].path : undefined,
+                marketingBanners: req.files?.marketingBanners
+                    ? req.files.marketingBanners.map(file => file.path)
+                    : [],
+            };
+
+            const newSettings = await Settings.create(newSettingsData);
+            return res.status(201).json({ message: "Settings created successfully", data: newSettings });
         }
 
         // Handle logo replacement
@@ -47,3 +71,4 @@ export const updateSettings = async (req, res) => {
         res.status(500).json({ message: "Error updating settings", error: error.message });
     }
 };
+

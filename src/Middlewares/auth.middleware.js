@@ -27,6 +27,8 @@ export const isAuthenticated = catchError(async (req, res, next) => {
 
     // Convert _id to string to avoid mismatches in queries
     req.user = { ...user.toObject(), _id: user._id.toString() };
+
+
     next();
 });
 

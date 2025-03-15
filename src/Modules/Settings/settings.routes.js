@@ -2,6 +2,7 @@ import express from "express";
 import { mixedFiles } from "../../Config/multerConfig.js";
 import { createSettings } from "./Controllers/addsettings.controller.js";
 import { updateSettings } from "./Controllers/editsettings.controller.js";
+import { getSettings } from "./Controllers/getsettings.controller.js";
 
 
 const router = express.Router();
@@ -15,8 +16,8 @@ const uploadFields = mixedFiles([
 
 // POST - Create Settings
 router.post("/", uploadFields, createSettings);
-
+router.get('/', getSettings);
 // PATCH - Update Settings
-router.patch("/:id", uploadFields, updateSettings);
+router.patch("/", uploadFields, updateSettings);
 
 export default router;

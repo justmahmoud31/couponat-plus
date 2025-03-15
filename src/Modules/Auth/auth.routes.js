@@ -1,7 +1,7 @@
 import express from 'express';
 import { addAdmin, deleteUser, forgetPassword, login, resendVerificationCode, resetPassword, signup, verifyForgetPasswordOtp, verifyOTP } from './Controllers/auth.controller.js';
 import { authorizeRoles, isAuthenticated } from '../../Middlewares/auth.middleware.js';
-import { getAllUsers } from './Controllers/getusers.controller.js';
+import { getAllUsers, getUserData } from './Controllers/getusers.controller.js';
 
 const router = express.Router();
 router.post('/signup', signup);
@@ -14,4 +14,5 @@ router.post('/resetpassword', resetPassword);
 router.post('/resendotp', resendVerificationCode);
 router.delete('/deleteuser/:id', isAuthenticated, authorizeRoles("admin"), deleteUser);
 router.get('/', isAuthenticated, authorizeRoles("admin"), getAllUsers);
+router.get('/me', isAuthenticated, getUserData);
 export default router;
