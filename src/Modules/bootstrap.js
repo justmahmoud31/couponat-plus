@@ -7,6 +7,7 @@ import sectionRouter from './Sections/section.routes.js';
 import bannerRouter from './Banners/banner.routes.js';
 import rateRouter from './Rate/rate.routes.js';
 import eventRouter from './Events/event.routes.js';
+import settingRouter from './Settings/settings.routes.js';
 export const bootstrap = (app) => {
     app.use('/api/coupons', couponRouter);
     app.use('/api/products', productRouter);
@@ -17,4 +18,5 @@ export const bootstrap = (app) => {
     app.use('/api/banner', bannerRouter);
     app.use('/api/rate', rateRouter);
     app.use('/api/events', eventRouter);
+    app.use('/api/settings', settingRouter);
 }
