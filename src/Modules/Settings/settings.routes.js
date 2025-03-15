@@ -1,8 +1,8 @@
 import express from "express";
 import { mixedFiles } from "../../Config/multerConfig.js";
-import { createSettings } from "./Controllers/addsettings.controller.js";
 import { updateSettings } from "./Controllers/editsettings.controller.js";
 import { getSettings } from "./Controllers/getsettings.controller.js";
+import { authorizeRoles, isAuthenticated } from "../../Middlewares/auth.middleware.js";
 
 
 const router = express.Router();
@@ -14,10 +14,9 @@ const uploadFields = mixedFiles([
     { name: "marketingBanners", maxCount: 10 },
 ], "settings");
 
-// POST - Create Settings
-router.post("/", uploadFields, createSettings);
+
 router.get('/', getSettings);
 // PATCH - Update Settings
-router.patch("/", uploadFields, updateSettings);
+router.patch("/", isAuthenticated, authorizeRoles("admin"), uploadFields, updateSettings);
 
 export default router;

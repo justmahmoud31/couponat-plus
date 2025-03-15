@@ -1,5 +1,8 @@
 import mongoose from "mongoose";
 
+
+
+// Update User Schema with profilePicture
 const userSchema = new mongoose.Schema({
     username: { 
         type: String, 
@@ -32,10 +35,7 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: [
-            "user",
-            "admin"
-        ],
+        enum: ["user", "admin"],
         default: "user"
     },
     otp: {
@@ -44,6 +44,9 @@ const userSchema = new mongoose.Schema({
     otpExpiry: {
         type: Date
     },
+    profilePicture: {
+        type: String
+    },
     createdAt: {
         type: Date,
         default: Date.now
@@ -51,7 +54,5 @@ const userSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
-
-
 
 export const User = mongoose.model("User", userSchema);
