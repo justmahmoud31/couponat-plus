@@ -3,6 +3,7 @@ import { Category } from "../../../../database/Models/Category.js";
 import { Store } from "../../../../database/Models/Store.js";
 import { catchError } from "../../../Middlewares/catchError.js";
 import { AppError } from "../../../Utils/AppError.js";
+import { Product } from "../../../../database/Models/Product.js";
 
 export const getAllStores = catchError(async (req, res, next) => {
     const { isDeleted } = req.query;
@@ -14,10 +15,13 @@ export const getAllStores = catchError(async (req, res, next) => {
         filter.isDeleted = false;
     }
 
+    // Fetch stores
     const stores = await Store.find(
         filter,
-        'logo name description rate numberOfCoupons'
+        'logo name description rate numberOfCoupons link numberOfProducts numberOfCategories createdAt updatedAt'
     ).sort({ createdAt: -1 });
+
+
 
     res.status(200).json({
         message: "Success",
