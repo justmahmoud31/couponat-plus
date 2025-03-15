@@ -66,7 +66,7 @@ export const updateSettings = async (req, res) => {
         if (copyright) existingSettings.copyright = copyright;
 
         await existingSettings.save();
-        res.status(200).json({ message: "Settings updated successfully", data: existingSettings });
+        res.status(200).json({ message: "Settings updated successfully", settings: existingSettings });
     } catch (error) {
         res.status(500).json({ message: "Error updating settings", error: error.message });
     }
