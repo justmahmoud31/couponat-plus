@@ -1,7 +1,4 @@
 import mongoose from "mongoose";
-
-
-
 // Update User Schema with profilePicture
 const userSchema = new mongoose.Schema({
     username: { 

@@ -28,6 +28,7 @@ export const validateUser = (data) => {
             "number.integer": "Points must be an integer",
             "number.min": "Points cannot be negative"
         }),
+        profilePicture: Joi.string().required()
     });
 
     return schema.validate(data, { abortEarly: false });

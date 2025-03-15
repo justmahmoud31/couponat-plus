@@ -3,9 +3,10 @@ import { addAdmin, deleteUser, forgetPassword, login, resendVerificationCode, re
 import { authorizeRoles, isAuthenticated } from '../../Middlewares/auth.middleware.js';
 import { getAllUsers, getUserData } from './Controllers/getusers.controller.js';
 import { updateUserProfile } from './Controllers/edituser.controller.js';
+import { singleFile } from '../../Config/multerConfig.js';
 
 const router = express.Router();
-router.post('/signup', signup);
+router.post('/signup', singleFile("profilePicture", "user"), signup);
 router.post('/addadmin', isAuthenticated, authorizeRoles("admin"), addAdmin);
 router.post('/login', login);
 router.post('/verifyotp', verifyOTP);
@@ -16,5 +17,5 @@ router.post('/resendotp', resendVerificationCode);
 router.delete('/deleteuser/:id', isAuthenticated, authorizeRoles("admin"), deleteUser);
 router.get('/', isAuthenticated, authorizeRoles("admin"), getAllUsers);
 router.get('/me', isAuthenticated, getUserData);
-router.patch('/', isAuthenticated, updateUserProfile);
+router.patch('/', isAuthenticated, singleFile("profilePicture", "user"), updateUserProfile);
 export default router;

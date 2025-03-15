@@ -9,9 +9,9 @@ import sendEmail from "../../../Utils/SendEmail.js";
 
 export const signup = catchError(async (req, res) => {
     const { username, email, password, phoneNumber } = req.body;
-
+    const profilePicture = req.file ? `uploads/user/${req.file.filename}` : undefined;
     // Validate user input
-    const { error } = validateUser({ username, email, password, phoneNumber });
+    const { error } = validateUser({ username, email, password, phoneNumber, profilePicture });
     if (error) {
         return res.status(400).json({ success: false, message: error.details.map(err => err.message) });
     }
@@ -21,6 +21,8 @@ export const signup = catchError(async (req, res) => {
     if (existingUser) {
         return res.status(400).json({ success: false, message: "Email already exists" });
     }
+
+    // Handle profile picture upload
 
     // Generate OTP and set expiry
     const { otp, otpExpiry } = generateOTP();
@@ -38,8 +40,9 @@ export const signup = catchError(async (req, res) => {
         htmlEmail,
         true
     );
-    // Create new user with OTP information
-    const newUser = await User.create({
+
+    // Create new user with OTP information and profile picture
+    const newUser = new User({
         username,
         email,
         password: hashedPassword,
@@ -47,15 +50,21 @@ export const signup = catchError(async (req, res) => {
         points: 0,
         otp: otp,
         otpExpiry: otpExpiry,
-        isVerified: false
+        isVerified: false,
+        profilePicture
     });
+
+    await newUser.save();
+
+
 
     return res.status(201).json({
         success: true,
         message: "User registered successfully. Please verify your email with the OTP sent.",
-        userId: newUser._id
+        userId: newUser._id,
     });
 });
+
 
 export const login = catchError(async (req, res) => {
     const { email, password } = req.body;
@@ -89,7 +98,7 @@ export const login = catchError(async (req, res) => {
 
     // Generate JWT token for verified user
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
-    
+
 
     return res.status(200).json({
         success: true,

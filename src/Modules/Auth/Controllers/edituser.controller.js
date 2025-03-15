@@ -1,18 +1,22 @@
 import { User } from "../../../../database/Models/User.js";
 import fs from "fs";
+import path from "path";
+
+// Helper to delete file with absolute path
 const deleteFile = (filePath) => {
-    if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+    const absolutePath = path.resolve(filePath);
+    if (fs.existsSync(absolutePath)) {
+        fs.unlinkSync(absolutePath);
     }
 };
 
 // Update User Profile Endpoint
 export const updateUserProfile = async (req, res) => {
     try {
-        const { id } = req.params;
-        const { username, email, phoneNumber } = req.body;
+        const user_id = req.user._id;
+        const { username, phoneNumber } = req.body;
 
-        const user = await User.findById(id);
+        const user = await User.findById(user_id);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
@@ -25,7 +29,6 @@ export const updateUserProfile = async (req, res) => {
 
         // Update other fields
         if (username) user.username = username;
-        if (email) user.email = email;
         if (phoneNumber) user.phoneNumber = phoneNumber;
 
         await user.save();
