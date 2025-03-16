@@ -15,22 +15,58 @@ export const getAllStores = catchError(async (req, res, next) => {
         filter.isDeleted = false;
     }
 
-    // Fetch stores
-    const stores = await Store.find(
-        filter,
-        'logo name description rate numberOfCoupons link numberOfProducts numberOfCategories createdAt updatedAt'
-    ).sort({ createdAt: -1 });
-
-
+    const stores = await Store.aggregate([
+        { $match: filter },
+        // Lookup and count categories
+        {
+            $lookup: {
+                from: "categories",
+                localField: "categories",
+                foreignField: "_id",
+                as: "categoriesList",
+            },
+        },
+        // Lookup and count coupons
+        {
+            $lookup: {
+                from: "coupons",
+                localField: "coupons",
+                foreignField: "_id",
+                as: "couponsList",
+            },
+        },
+        // Lookup and count products
+        {
+            $lookup: {
+                from: "products",
+                localField: "products",
+                foreignField: "_id",
+                as: "productsList",
+            },
+        },
+        {
+            $project: {
+                _id: 1,
+                name: 1,
+                logo: 1,
+                description: 1,
+                link: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                numberOfCategories: { $size: "$categoriesList" },
+                numberOfCoupons: { $size: "$couponsList" },
+                numberOfProducts: { $size: "$productsList" },
+            },
+        },
+        { $sort: { createdAt: -1 } },
+    ]);
 
     res.status(200).json({
         message: "Success",
         totalStores: stores.length,
-        stores
+        stores,
     });
 });
-
-
 export const getOneStore = catchError(async (req, res, next) => {
     const oneStore = await Store.findById(req.params.id).populate([
         { path: 'categories' },
@@ -51,21 +87,16 @@ export const getOneStore = catchError(async (req, res, next) => {
 
 export const getStoresByCategory = catchError(async (req, res, next) => {
     const { slug } = req.params;
-
     // Find category by slug
     const category = await Category.findOne({ slug });
     if (!category) {
         return res.status(404).json({ message: "Category not found" });
     }
-
-    // Debug: Log the category ID
-    console.log("Category ID:", category._id);
-
     // Find stores associated with this category and that are not deleted
     const stores = await Store.find({
         categories: new mongoose.Types.ObjectId(category._id),
         isDeleted: false,
-    }).select("link logo numberOfCoupons");
+    });
 
     res.status(200).json({
         message: "Stores retrieved successfully",

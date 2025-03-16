@@ -30,24 +30,27 @@ const StoreSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Product",
     }],
-    numberOfCoupons: {
-        type: Number,
-        default: 0,
-    },
-    numberOfCategories: {
-        type: Number,
-        default: 0,
-    },
-    numberOfProducts: {
-        type: Number,
-        default: 0,
-    },
     isDeleted: {
         type: Boolean,
         default: false,
     },
 }, {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+});
+
+// Virtuals for dynamic counts
+StoreSchema.virtual("numberOfCoupons").get(function () {
+    return this.coupons?.length || 0;
+});
+
+StoreSchema.virtual("numberOfCategories").get(function () {
+    return this.categories?.length || 0;
+});
+
+StoreSchema.virtual("numberOfProducts").get(function () {
+    return this.products?.length || 0;
 });
 
 // Virtual populate for rates
@@ -55,20 +58,6 @@ StoreSchema.virtual('rates', {
     ref: 'Rate',
     localField: '_id',
     foreignField: 'store_id',
-});
-
-// Middleware to update counts when fields are modified
-StoreSchema.pre('save', async function (next) {
-    if (this.isModified('coupons')) {
-        this.numberOfCoupons = this.coupons.length;
-    }
-    if (this.isModified('categories')) {
-        this.numberOfCategories = this.categories.length;
-    }
-    if (this.isModified('products')) {
-        this.numberOfProducts = this.products.length;
-    }
-    next();
 });
 
 export const Store = mongoose.model("Store", StoreSchema);

@@ -10,6 +10,7 @@ const CouponSchema = mongoose.Schema(
     link: { type: String },
     category_id: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
     store_id: { type: mongoose.Schema.Types.ObjectId, ref: "Store" },
+    discount: { type: Number },
     type: {
       type: String,
       enum: ["show", "cover", "show_half"]

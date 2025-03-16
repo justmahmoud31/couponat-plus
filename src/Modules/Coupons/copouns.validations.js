@@ -11,7 +11,7 @@ export const validateCoupon = (data) => {
         type: Joi.string().required().messages({
             "string.base": "Type is Required"
         }),
-        expireDate : Joi.date().optional(),
+        expireDate: Joi.date().optional(),
         description: Joi.string().allow("").optional(),
         image: Joi.string().optional().allow(null),
         cover_image: Joi.string().optional().allow(null),
@@ -25,6 +25,7 @@ export const validateCoupon = (data) => {
         related_coupons: Joi.array().items(Joi.string()).optional().messages({
             "array.base": "Related coupons must be an array of strings",
         }),
+        discount: Joi.number().optional()
     });
 
     return schema.validate(data, { abortEarly: false });

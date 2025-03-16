@@ -1,5 +1,5 @@
 import express from 'express';
-import { addAdmin, deleteUser, forgetPassword, login, resendVerificationCode, resetPassword, signup, verifyForgetPasswordOtp, verifyOTP } from './Controllers/auth.controller.js';
+import { addAdmin, deleteUser, forgetPassword, login, promoteUserToAdmin, resendVerificationCode, resetPassword, signup, verifyForgetPasswordOtp, verifyOTP } from './Controllers/auth.controller.js';
 import { authorizeRoles, isAuthenticated } from '../../Middlewares/auth.middleware.js';
 import { getAllUsers, getUserData } from './Controllers/getusers.controller.js';
 import { updateUserProfile } from './Controllers/edituser.controller.js';
@@ -18,4 +18,5 @@ router.delete('/deleteuser/:id', isAuthenticated, authorizeRoles("admin"), delet
 router.get('/', isAuthenticated, authorizeRoles("admin"), getAllUsers);
 router.get('/me', isAuthenticated, getUserData);
 router.patch('/', isAuthenticated, singleFile("profilePicture", "user"), updateUserProfile);
+router.patch('/promote/:id', isAuthenticated, authorizeRoles("admin"), promoteUserToAdmin);
 export default router;

@@ -65,7 +65,6 @@ export const signup = catchError(async (req, res) => {
     });
 });
 
-
 export const login = catchError(async (req, res) => {
     const { email, password } = req.body;
 
@@ -350,5 +349,28 @@ export const deleteUser = catchError(async (req, res, next) => {
     }
     res.status(201).json({
         Message: "Deleted"
+    });
+});
+export const promoteUserToAdmin = catchError(async (req, res, next) => {
+    const { id } = req.params;
+
+    // Find the user by ID
+    const user = await User.findById(id);
+    if (!user) {
+        return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Check if the user is already an admin
+    if (user.role === "admin") {
+        return res.status(400).json({ success: false, message: "User is already an admin" });
+    }
+
+    // Promote user to admin
+    user.role = "admin";
+    await user.save();
+
+    return res.status(200).json({ 
+        success: true, 
+        message: "User promoted to admin successfully",  
     });
 });
