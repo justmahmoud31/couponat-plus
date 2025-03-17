@@ -1,6 +1,41 @@
 import { Section } from "../../../../database/Models/Section.js";
 import { catchError } from "../../../Middlewares/catchError.js";
 
+export const editSection = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { title, description, addItems, deleteItems } = req.body;
+
+        const section = await Section.findById(id);
+        if (!section) {
+            return res.status(404).json({ message: "Section not found" });
+        }
+
+        if (title) section.title = title;
+        if (description) section.description = description;
+
+        // Add items
+        if (addItems && Array.isArray(addItems)) {
+            section.items.push(...addItems);
+        }
+
+        // Delete items
+        if (deleteItems && Array.isArray(deleteItems)) {
+            section.items = section.items.filter(
+                itemId => !deleteItems.includes(itemId.toString())
+            );
+        }
+
+        await section.save();
+
+        return res.status(200).json({ message: "Section updated successfully", section });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+
 export const switchOrder = catchError(async (req, res, next) => {
 
     const { firstSectionId, secondSectionId } = req.body;
