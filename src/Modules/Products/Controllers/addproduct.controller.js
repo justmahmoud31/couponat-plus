@@ -7,7 +7,7 @@ import path from "path";
 
 export const addproduct = catchError(async (req, res, next) => {
     try {
-        const { title, description, link, code, brand_name, price, discounted_price, category_id, related_product } = req.body;
+        const { title, description, link, code, brand_name, price, discounted_price, category_id } = req.body;
 
         // Prepare the data for validation (keep IDs as strings first)
         const productData = {
@@ -18,8 +18,7 @@ export const addproduct = catchError(async (req, res, next) => {
             brand_name,
             price,
             discounted_price,
-            category_id: category_id ? String(category_id) : "", // Keep as string
-            related_product: related_product ? String(related_product).split(",") : [], // Keep as array of strings
+            category_id: category_id ? String(category_id) : "", 
             images: req.files["images"] ? req.files["images"].map(file => file.path) : [],
             cover_image: req.files["cover_image"] ? req.files["cover_image"][0].path : null,
         };

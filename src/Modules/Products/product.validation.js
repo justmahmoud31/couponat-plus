@@ -21,10 +21,7 @@ export const validateProduct = (data) => {
         }),
         category_id: Joi.string().optional().messages({
             "string.base": "Category ID must be a string",
-        }),
-        related_product: Joi.array().items(Joi.string()).optional().messages({
-            "array.base": "Related products must be an array of product IDs",
-        }),
+        })
     });
 
     return schema.validate(data, { abortEarly: false });

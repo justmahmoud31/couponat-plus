@@ -5,7 +5,7 @@ const getAllCopouns = catchError(async (req, res, next) => {
     
     const allCoupons = await Coupon.find().sort({ createdAt: -1 }); 
     const couponsCount = allCoupons.length;
-
+    
     res.status(200).json({
         message: "Coupons retrieved successfully",
         couponsCount,
