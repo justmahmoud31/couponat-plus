@@ -12,7 +12,7 @@ dotenv.config();
 app.use(express.json());
 app.use(cors());
 
-// ✅ Serve uploads folder
+//  Serve uploads folder
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 bootstrap(app);
