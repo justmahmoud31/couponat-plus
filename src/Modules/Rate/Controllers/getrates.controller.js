@@ -1,6 +1,7 @@
 import Rate from "../../../../database/Models/Rate.js";
 import { Store } from "../../../../database/Models/Store.js";
 import { catchError } from "../../../Middlewares/catchError.js";
+import { AppError } from "../../../Utils/AppError.js";
 
 // Get All Rates
 export const getAllRates = catchError(async (req, res) => {

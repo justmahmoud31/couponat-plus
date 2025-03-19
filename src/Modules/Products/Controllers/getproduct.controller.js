@@ -21,4 +21,4 @@ export const getOneProduct = catchError(async (req, res, next) => {
         Message: "Product retrived succesfully",
         product
     })
-})
+});
