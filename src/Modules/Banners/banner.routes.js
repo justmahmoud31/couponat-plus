@@ -4,8 +4,10 @@ import { authorizeRoles, isAuthenticated } from '../../Middlewares/auth.middlewa
 import { addBanner } from './Controllers/addbanner.controller.js';
 import { singleFile } from '../../Config/multerConfig.js';
 import { deleteBanner } from './Controllers/deletebanner.controller.js';
+import { editBanner } from './Controllers/editbanner.controller.js';
 const router = express.Router();
 router.get('/', getAllBanners);
 router.post('/', isAuthenticated, authorizeRoles("admin"), singleFile("images", "banner"), addBanner);
 router.delete('/:id', isAuthenticated, authorizeRoles("admin"), deleteBanner);
+router.patch('/:id', isAuthenticated, authorizeRoles("admin"), singleFile("images", "banner"), editBanner);
 export default router;
