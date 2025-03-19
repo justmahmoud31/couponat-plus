@@ -7,7 +7,21 @@ import { editBanner } from './Controllers/editbanner.controller.js';
 import { getAllBanners } from './Controllers/getbanners.controller.js';
 const router = express.Router();
 router.get('/', getAllBanners);
-router.post('/', isAuthenticated, authorizeRoles("admin"), mixedFiles("images", "banner"), addBanner);
+router.post(
+    '/',
+    isAuthenticated,
+    authorizeRoles("admin"),
+    mixedFiles([{ name: "images", maxCount: 5 }], "banner"), // Fix: Pass an array of objects
+    addBanner
+);
+
 router.delete('/:id', isAuthenticated, authorizeRoles("admin"), deleteBanner);
-router.patch('/:id', isAuthenticated, authorizeRoles("admin"), mixedFiles("images", "banner"), editBanner);
+router.patch(
+    "/:id",
+    isAuthenticated,
+    authorizeRoles("admin"),
+    mixedFiles([{ name: "images", maxCount: 5 }], "banner"), // Pass as an array
+    editBanner
+);
+
 export default router;

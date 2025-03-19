@@ -15,13 +15,13 @@ const addBanner = catchError(async (req, res, next) => {
         return res.status(400).json({ message: "Invalid banner type." });
     }
 
-    // Extract image path from Multer (single file upload)
-    const imagePath = req.file ? req.file.path : null;
+    // Ensure files are extracted correctly
+    const imagePaths = req.files && req.files.images ? req.files.images.map(file => file.path) : [];
 
-    // Create new banner with image path
+    // Create new banner with image paths
     const newBanner = new Banner({ 
         title, 
-        images: imagePath ? [imagePath] : [], // Store image in array
+        images: imagePaths, // Store image paths in array
         type 
     });
 

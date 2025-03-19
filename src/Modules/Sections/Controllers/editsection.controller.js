@@ -4,7 +4,7 @@ import { catchError } from "../../../Middlewares/catchError.js";
 export const editSection = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, description, addItems, deleteItems } = req.body;
+        const { title, description, addItems, deleteItems, isActive } = req.body;
 
         const section = await Section.findById(id);
         if (!section) {
@@ -13,7 +13,7 @@ export const editSection = async (req, res) => {
 
         if (title) section.title = title;
         if (description) section.description = description;
-
+        if (isActive) section.isActive = isActive;
         // Add items
         if (addItems && Array.isArray(addItems)) {
             section.items.push(...addItems);
