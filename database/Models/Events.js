@@ -4,6 +4,10 @@ const EventSchema = mongoose.Schema({
     cover_img: { type: String },
     name: { type: String },
     link: { type: String },
+    isActive: {
+        type: Boolean,
+        default: true
+    }
 }, {
     timestamps: true
 });

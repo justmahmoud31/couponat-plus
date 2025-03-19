@@ -1,13 +1,13 @@
 import express from 'express';
-import { getAllBanners } from './Controllers/getbanners.controller.js';
+import { mixedFiles } from '../../Config/multerConfig.js';
 import { authorizeRoles, isAuthenticated } from '../../Middlewares/auth.middleware.js';
 import { addBanner } from './Controllers/addbanner.controller.js';
-import { singleFile } from '../../Config/multerConfig.js';
 import { deleteBanner } from './Controllers/deletebanner.controller.js';
 import { editBanner } from './Controllers/editbanner.controller.js';
+import { getAllBanners } from './Controllers/getbanners.controller.js';
 const router = express.Router();
 router.get('/', getAllBanners);
-router.post('/', isAuthenticated, authorizeRoles("admin"), singleFile("images", "banner"), addBanner);
+router.post('/', isAuthenticated, authorizeRoles("admin"), mixedFiles("images", "banner"), addBanner);
 router.delete('/:id', isAuthenticated, authorizeRoles("admin"), deleteBanner);
-router.patch('/:id', isAuthenticated, authorizeRoles("admin"), singleFile("images", "banner"), editBanner);
+router.patch('/:id', isAuthenticated, authorizeRoles("admin"), mixedFiles("images", "banner"), editBanner);
 export default router;

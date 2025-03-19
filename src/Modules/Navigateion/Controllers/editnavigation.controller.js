@@ -4,7 +4,7 @@ import { Navigation } from "../../../../database/Models/Navigation.js";
 export const editNavigation = async (req, res) => {
     try {
         const { id } = req.params;
-        const { label, sort_order } = req.body;
+        const { label, sort_order, isActive } = req.body;
 
         // Find the navigation item by ID
         const navigation = await Navigation.findById(id);
@@ -15,7 +15,7 @@ export const editNavigation = async (req, res) => {
         // Update fields if provided
         if (label !== undefined) navigation.label = label;
         if (sort_order !== undefined) navigation.sort_order = sort_order;
-
+        if (isActive !== undefined) navigation.isActive = isActive;
         await navigation.save();
 
         res.status(200).json({ message: "Navigation item updated successfully", navigation });
