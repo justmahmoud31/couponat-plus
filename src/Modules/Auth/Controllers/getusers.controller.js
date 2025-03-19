@@ -11,8 +11,8 @@ export const getAllUsers = catchError(async (req, res, next) => {
     })
 });
 export const getUserData = catchError(async (req, res, next) => {
-    const user_id = req.user._id; 
-    const user = await User.findById(user_id).select('-password -points -otp -otpExpiry');
+    const user_id = req.user._id;
+    const user = await User.findById(user_id).select('-password -points -otp -otpExpiry -isVerified');
     if (!user) {
         return res.status(404).json({
             message: "User not found",

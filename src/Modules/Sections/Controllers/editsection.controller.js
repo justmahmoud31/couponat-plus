@@ -79,6 +79,9 @@ export const shiftSection = catchError(async (req, res, next) => {
         return res.status(200).json({ message: "No changes needed." });
     }
 
+    // Temporarily set order to null to avoid duplicate key issues
+    await Section.findByIdAndUpdate(sectionId, { order: null });
+
     // Shift other sections
     if (currentOrder < newOrder) {
         await Section.updateMany(
@@ -92,9 +95,8 @@ export const shiftSection = catchError(async (req, res, next) => {
         );
     }
 
-    // Update the target section's order
-    section.order = newOrder;
-    await section.save();
+    // Set the section's order to newOrder
+    await Section.findByIdAndUpdate(sectionId, { order: newOrder });
 
     res.status(200).json({ message: "Section order updated successfully." });
-})
+});
