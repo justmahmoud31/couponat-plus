@@ -2,7 +2,7 @@ import { Banner } from "../../../../database/Models/Banner.js";
 import { catchError } from "../../../Middlewares/catchError.js";
 
 const addBanner = catchError(async (req, res, next) => {
-    const { title, type } = req.body;
+    const { title, type, description } = req.body;
 
     // Validate required fields
     if (!title || !type) {
@@ -10,7 +10,7 @@ const addBanner = catchError(async (req, res, next) => {
     }
 
     // Validate type
-    const validTypes = ["slider", "static", "two"];
+    const validTypes = ["slider", "static", "two", "bannerText"];
     if (!validTypes.includes(type)) {
         return res.status(400).json({ message: "Invalid banner type." });
     }
@@ -19,10 +19,11 @@ const addBanner = catchError(async (req, res, next) => {
     const imagePaths = req.files && req.files.images ? req.files.images.map(file => file.path) : [];
 
     // Create new banner with image paths
-    const newBanner = new Banner({ 
-        title, 
+    const newBanner = new Banner({
+        title,
         images: imagePaths, // Store image paths in array
-        type 
+        type,
+        description
     });
 
     // Save to database
