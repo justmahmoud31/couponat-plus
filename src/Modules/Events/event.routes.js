@@ -9,5 +9,5 @@ const router = express.Router();
 router.post('/', singleFile("cover_img", "events"), isAuthenticated, authorizeRoles("admin"), adddevent);
 router.patch('/:id', singleFile("cover_img", "events"), isAuthenticated, authorizeRoles("admin"), editEvent);
 router.delete('/:id', isAuthenticated, authorizeRoles("admin"), deleteEvent);
-router.get('/', getAllEvents);
+router.get('/', isAuthenticated, authorizeRoles('admin'), getAllEvents);
 export default router;

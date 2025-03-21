@@ -5,5 +5,7 @@ const BannerSchema = new mongoose.Schema({
     description: { type: String },
     images: [{ type: String }],
     type: { type: String, enum: ["slider", "static", "two", "bannerText"], required: true },
+}, {
+    timestamps: true
 });
 export const Banner = mongoose.model("Banner", BannerSchema);

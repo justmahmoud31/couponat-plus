@@ -5,14 +5,11 @@ export const editBanner = async (req, res) => {
     try {
         const { id } = req.params;
         const { title, type, deletedImages } = req.body;
-        const newImages = req.files?.images?.map(file => file.path) || []; // Extract new images correctly
-
-        // Find the existing banner
+        const newImages = req.files?.images?.map(file => file.path) || []; 
         const banner = await Banner.findById(id);
         if (!banner) {
             return res.status(404).json({ message: "Banner not found" });
         }
-
         // Delete selected images if requested
         if (deletedImages) {
             const imagesToDelete = Array.isArray(deletedImages) ? deletedImages : [deletedImages]; // Ensure it's an array
@@ -26,7 +23,6 @@ export const editBanner = async (req, res) => {
                 return true; // Keep in array
             });
         }
-
         // Update the banner fields
         banner.title = title || banner.title;
         banner.type = type || banner.type;

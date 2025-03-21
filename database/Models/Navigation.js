@@ -9,5 +9,7 @@ const NavigationSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     }
+}, {
+    timestamps: true
 });
 export const Navigation = mongoose.model("Navigation", NavigationSchema);

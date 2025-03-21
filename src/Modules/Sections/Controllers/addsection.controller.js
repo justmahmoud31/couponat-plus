@@ -10,7 +10,7 @@ const addSection = catchError(async (req, res, next) => {
         return res.status(400).json({ message: error.details[0].message });
     }
 
-    const { title, description, banner_id, store_id, text, type, category_id, product_id, order, items } = req.body;
+    const { title, description, banner_id, store_id, text, type, category_id, product_id, order, items, isActive } = req.body;
 
     let newOrder = order;
     if (newOrder === undefined) {
@@ -29,6 +29,7 @@ const addSection = catchError(async (req, res, next) => {
         product_id,
         items: items || [],
         order: newOrder,
+        isActive
     });
 
     await newSection.save();
