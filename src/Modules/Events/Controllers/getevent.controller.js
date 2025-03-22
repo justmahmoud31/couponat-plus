@@ -17,4 +17,14 @@ export const getAllEvents = catchError(async (req, res, next) => {
         eventsCount,
         allEvents
     })
+});
+export const getAllActiveEvents = catchError(async (req, res, next) => {
+    const filter = { isActive: true }
+    const allEvents = await Event.find(filter).sort({ createdAt: -1 });
+    const eventsCount = allEvents.length;
+    res.status(200).json({
+        Message: "success",
+        eventsCount,
+        allEvents
+    })
 })

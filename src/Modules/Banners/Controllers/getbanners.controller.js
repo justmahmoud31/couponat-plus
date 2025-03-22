@@ -38,5 +38,33 @@ const getAllBanners = catchError(async (req, res, next) => {
         banners,
     });
 });
+const getAllActiveBanners = catchError(async (req, res, next) => {
+    const { page = 1, limit = 20 } = req.query;
+    const filter = { isActive: true }
 
-export { getAllBanners };
+    // Convert page & limit to numbers
+    const pageNumber = parseInt(page) || 1;
+    const limitNumber = parseInt(limit) || 20;
+    const skip = (pageNumber - 1) * limitNumber;
+
+    // Count total banners
+    const totalBanners = await Banner.countDocuments(filter);
+
+    // Fetch paginated banners
+    const banners = await Banner.find(filter)
+        .sort({ createdAt: -1 }) // Sort by newest first
+        .skip(skip)
+        .limit(limitNumber);
+    const allBanners = await Banner.find();
+    const bannerCount = allBanners.length
+    res.status(200).json({
+        status: "Success",
+        message: "Banners fetched successfully",
+        bannerCount,
+        totalBanners,
+        totalPages: Math.ceil(totalBanners / limitNumber),
+        page: pageNumber,
+        banners,
+    });
+});
+export { getAllBanners , getAllActiveBanners };

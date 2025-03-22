@@ -4,9 +4,10 @@ import { authorizeRoles, isAuthenticated } from '../../Middlewares/auth.middlewa
 import { addBanner } from './Controllers/addbanner.controller.js';
 import { deleteBanner } from './Controllers/deletebanner.controller.js';
 import { editBanner } from './Controllers/editbanner.controller.js';
-import { getAllBanners } from './Controllers/getbanners.controller.js';
+import { getAllActiveBanners, getAllBanners } from './Controllers/getbanners.controller.js';
 const router = express.Router();
-router.get('/', getAllBanners);
+router.get('/', isAuthenticated, authorizeRoles("admin"), getAllBanners);
+router.get('/all', getAllActiveBanners);
 router.post(
     '/',
     isAuthenticated,

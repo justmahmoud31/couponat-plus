@@ -4,9 +4,8 @@ import { AppError } from "../../../Utils/AppError.js";
 import mongoose from "mongoose";
 
 const getAllCopouns = catchError(async (req, res, next) => {
-    const { category, sort } = req.query;
+    const { category, sort, page = 1, limit = 20 } = req.query;
 
-    // Build query conditions
     let filter = {};
     if (category) {
         if (mongoose.Types.ObjectId.isValid(category)) {
@@ -16,19 +15,28 @@ const getAllCopouns = catchError(async (req, res, next) => {
         }
     }
 
-    // Determine sorting order (default: descending)
     const sortOrder = sort === "asc" ? 1 : -1;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    // Fetch coupons with optional filtering and sorting
-    const allCoupons = await Coupon.find(filter).sort({ createdAt: sortOrder });
-    const couponsCount = allCoupons.length;
+    // Get total count of coupons
+    const totalCoupons = await Coupon.countDocuments(filter);
+
+    // Fetch paginated coupons
+    const allCoupons = await Coupon.find(filter)
+        .sort({ createdAt: sortOrder })
+        .skip(skip)
+        .limit(parseInt(limit));
 
     res.status(200).json({
         message: "Coupons retrieved successfully",
-        couponsCount,
+        totalCoupons,
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(totalCoupons / limit),
+        couponsCount: allCoupons.length,
         allCoupons,
     });
 });
+
 
 
 

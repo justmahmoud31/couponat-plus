@@ -2,7 +2,7 @@ import express from 'express';
 import { authorizeRoles, isAuthenticated } from '../../Middlewares/auth.middleware.js';
 import { adddevent } from './Controllers/addevent.controller.js';
 import { singleFile } from '../../Config/multerConfig.js';
-import { getAllEvents } from './Controllers/getevent.controller.js';
+import { getAllActiveEvents, getAllEvents } from './Controllers/getevent.controller.js';
 import { editEvent } from './Controllers/editevent.controller.js';
 import { deleteEvent } from './Controllers/deleteevent.controller.js';
 const router = express.Router();
@@ -10,4 +10,5 @@ router.post('/', singleFile("cover_img", "events"), isAuthenticated, authorizeRo
 router.patch('/:id', singleFile("cover_img", "events"), isAuthenticated, authorizeRoles("admin"), editEvent);
 router.delete('/:id', isAuthenticated, authorizeRoles("admin"), deleteEvent);
 router.get('/', isAuthenticated, authorizeRoles('admin'), getAllEvents);
+router.get('/all', getAllActiveEvents);
 export default router;

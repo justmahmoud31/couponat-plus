@@ -13,7 +13,8 @@ import {
 } from "./Controllers/editsection.controller.js";
 import { deleteSection } from "./Controllers/deletesection.controller.js";
 const router = express.Router();
-router.get("/", getsectionController.getSection);
+router.get("/", isAuthenticated, authorizeRoles("admin"), getsectionController.getSection);
+router.get('/all', getsectionController.getActiveSections);
 router.post("/", isAuthenticated, authorizeRoles("admin"), addSection);
 router.patch(
   "/switch-order",
