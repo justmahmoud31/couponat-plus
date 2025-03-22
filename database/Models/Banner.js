@@ -5,6 +5,10 @@ const BannerSchema = new mongoose.Schema({
     description: { type: String },
     images: [{ type: String }],
     type: { type: String, enum: ["slider", "static", "two", "bannerText"], required: true },
+    isActive: {
+        type: Boolean,
+        default: true
+    }
 }, {
     timestamps: true
 });

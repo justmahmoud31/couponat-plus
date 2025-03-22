@@ -23,7 +23,8 @@ const addBanner = catchError(async (req, res, next) => {
         title,
         images: imagePaths, // Store image paths in array
         type,
-        description
+        description,
+        isActive: "true"
     });
 
     // Save to database

@@ -4,8 +4,8 @@ import { Banner } from "../../../../database/Models/Banner.js";
 export const editBanner = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, type, deletedImages } = req.body;
-        const newImages = req.files?.images?.map(file => file.path) || []; 
+        const { title, type, deletedImages, isActive } = req.body;
+        const newImages = req.files?.images?.map(file => file.path) || [];
         const banner = await Banner.findById(id);
         if (!banner) {
             return res.status(404).json({ message: "Banner not found" });
@@ -27,7 +27,7 @@ export const editBanner = async (req, res) => {
         banner.title = title || banner.title;
         banner.type = type || banner.type;
         banner.images = [...banner.images, ...newImages]; // Append new images to existing ones
-
+        banner.isActive = isActive || banenr.isActive;
         await banner.save();
         res.status(200).json({ message: "Banner updated successfully", banner });
 
