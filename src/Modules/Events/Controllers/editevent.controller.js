@@ -4,7 +4,7 @@ import fs from "fs";
 export const editEvent = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, link } = req.body;
+        const { name, link, isActive } = req.body;
         const newCoverImg = req.file?.path; // Assuming file upload middleware
 
         // Find the existing event
@@ -24,6 +24,7 @@ export const editEvent = async (req, res) => {
         // Update the event fields
         event.name = name || event.name;
         event.link = link || event.link;
+        event.isActive = isActive || event.isActive;
         if (newCoverImg) {
             event.cover_img = newCoverImg;
         }

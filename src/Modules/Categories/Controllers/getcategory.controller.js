@@ -6,14 +6,24 @@ import { catchError } from "../../../Middlewares/catchError.js";
 import { AppError } from "../../../Utils/AppError.js";
 
 export const getAllCategories = catchError(async (req, res, next) => {
-  // Get all categories
+  let { page = 1, limit = 20 } = req.query;
+  page = parseInt(page);
+  limit = parseInt(limit);
+  const skip = (page - 1) * limit;
+
+  // Get all categories with pagination
   const allCategories = await Category.find()
     .select("-sub_categories")
     .sort({ createdAt: -1 })
     .populate({
       path: "parent_id",
       select: "name slug image",
-    });
+    })
+    .skip(skip)
+    .limit(limit);
+
+  // Get total count of categories
+  const totalCategories = await Category.countDocuments();
 
   // Get all category IDs
   const categoryIds = allCategories.map((category) => category._id);
@@ -64,14 +74,16 @@ export const getAllCategories = catchError(async (req, res, next) => {
     };
   });
 
-  const categoriesCount = categoriesWithCounts.length;
-
   res.status(200).json({
     message: "All Categories retrieved successfully",
-    categoriesCount,
+    categoriesCount: categoriesWithCounts.length,
+    totalCategories,
+    currentPage: page,
+    totalPages: Math.ceil(totalCategories / limit),
     allCategories: categoriesWithCounts,
   });
 });
+
 
 export const getOneCategory = catchError(async (req, res, next) => {
   const { id } = req.params;

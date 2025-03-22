@@ -2,7 +2,15 @@ import { Event } from "../../../../database/Models/Events.js";
 import { catchError } from "../../../Middlewares/catchError.js";
 
 export const getAllEvents = catchError(async (req, res, next) => {
-    const allEvents = await Event.find({}).sort({ createdAt: -1 });
+    const { isActive } = req.query;
+    let filter = {};
+    // Handle active/inactive filter
+    if (isActive === "true") {
+        filter.isActive = true;
+    } else if (isActive === "false") {
+        filter.isActive = false;
+    }
+    const allEvents = await Event.find(filter).sort({ createdAt: -1 });
     const eventsCount = allEvents.length;
     res.status(200).json({
         Message: "success",

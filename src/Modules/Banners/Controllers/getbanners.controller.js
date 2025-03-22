@@ -34,7 +34,7 @@ const getAllBanners = catchError(async (req, res, next) => {
         bannerCount,
         totalBanners,
         totalPages: Math.ceil(totalBanners / limitNumber),
-        currentPage: pageNumber,
+        page: pageNumber,
         banners,
     });
 });

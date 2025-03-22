@@ -7,8 +7,10 @@ import { Product } from "../../../../database/Models/Product.js";
 import { Event } from "../../../../database/Models/Events.js";
 
 const getSection = catchError(async (req, res, next) => {
-    const { type } = req.query;
-    const filter = type ? { type } : {};
+    const { type, isActive } = req.query;
+    const filter = {};
+    if (type) filter.type = type;
+    if (isActive !== undefined) filter.isActive = isActive === "true";
 
     let sections = await Section.find(filter)
         .populate([
