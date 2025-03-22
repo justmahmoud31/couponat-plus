@@ -11,6 +11,7 @@ import settingRouter from './Settings/settings.routes.js';
 import statsRouter from './System/stats.routes.js';
 import marketingRouter from './Marketing/marketing.routes.js';
 import navigationRouter from './Navigateion/navigation.routes.js';
+import wishlistRouter from './Wishlist/wishlist.routes.js';
 export const bootstrap = (app) => {
     app.use('/api/coupons', couponRouter);
     app.use('/api/products', productRouter);
@@ -25,4 +26,5 @@ export const bootstrap = (app) => {
     app.use('/api/system', statsRouter);
     app.use('/api/marketing', marketingRouter);
     app.use('/api/nav', navigationRouter);
+    app.use('/api/wishlist', wishlistRouter);
 }
