@@ -61,8 +61,6 @@ const getOneCopoun = catchError(async (req, res, next) => {
     })
         .populate("category_id", "name") // ✅ Get only the name
         .populate("store_id");
-
-    // ✅ Convert coupon to object to allow adding a new property
     coupon = coupon.toObject();
     coupon.relatedCoupons = relatedCoupons;
 

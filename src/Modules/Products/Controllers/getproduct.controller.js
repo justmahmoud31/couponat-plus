@@ -3,17 +3,21 @@ import { catchError } from "../../../Middlewares/catchError.js";
 import { AppError } from "../../../Utils/AppError.js";
 
 export const getAllProducts = catchError(async (req, res, next) => {
-    let { page = 1, limit = 20 } = req.query;
+    let { page = 1, limit = 20, sort = { createdAt: -1 } } = req.query;
     page = parseInt(page);
     limit = parseInt(limit);
     const skip = (page - 1) * limit;
-
+    if (sort === "asc") {
+        sort = { createdAt: -1 }
+    } else if (sort === "desc") {
+        sort = { createdAt: 1 }
+    }
     // Get total count of products
     const totalProducts = await Product.countDocuments();
 
     // Fetch paginated products
     const allProducts = await Product.find()
-        .sort({ createdAt: -1 })
+        .sort(sort)
         .skip(skip)
         .limit(limit);
 

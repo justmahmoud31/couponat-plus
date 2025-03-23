@@ -31,10 +31,6 @@ export const addproduct = catchError(async (req, res, next) => {
 
         // Convert category_id and related_product to ObjectId **after validation**
         productData.category_id = category_id ? new mongoose.Types.ObjectId(category_id) : null;
-        productData.related_product = related_product
-            ? related_product.split(",").map(id => new mongoose.Types.ObjectId(id))
-            : [];
-
         // Save the product
         const product = new Product(productData);
         await product.save();

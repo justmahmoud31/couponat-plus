@@ -1,7 +1,7 @@
 import express from "express";
 import { singleFile } from "../../Config/multerConfig.js";
 import { addCategory } from "./Controllers/addcategory.controller.js";
-import { getAllCategories, getByBestCategory, getCategoryBySlug, getOneCategory } from "./Controllers/getcategory.controller.js";
+import { getAllActiveCategories, getAllCategories, getByBestCategory, getCategoryBySlug, getOneCategory } from "./Controllers/getcategory.controller.js";
 import { deleteOldFiles } from "../../Middlewares/deleteOldFiles.js";
 import { editCategory } from "./Controllers/editcategory.controller.js";
 import { Category } from "../../../database/Models/Category.js";
@@ -20,7 +20,8 @@ router.patch(
     singleFile("image", "categories"), // Handles new file upload
     editCategory
 );
-router.get('/', getAllCategories);
+router.get('/', isAuthenticated, authorizeRoles("admin"), getAllCategories);
+router.get('/all',getAllActiveCategories);
 router.get('/getonecategory/:id', getOneCategory);
 router.get('/:slug', getCategoryBySlug);
 router.get('/bybest/:best', getByBestCategory);

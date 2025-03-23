@@ -2,7 +2,7 @@ import { Banner } from "../../../../database/Models/Banner.js";
 import { catchError } from "../../../Middlewares/catchError.js";
 
 const getAllBanners = catchError(async (req, res, next) => {
-    const { isActive, page = 1, limit = 20 } = req.query;
+    let { isActive, page = 1, limit = 20, sort = { createdAt: -1 } } = req.query;
 
     let filter = {};
 
@@ -12,7 +12,11 @@ const getAllBanners = catchError(async (req, res, next) => {
     } else if (isActive === "false") {
         filter.isActive = false;
     }
-
+    if (sort === "asc") {
+        sort = { createdAt: -1 }
+    } else if (sort === "desc") {
+        sort = { createdAt: 1 }
+    }
     // Convert page & limit to numbers
     const pageNumber = parseInt(page) || 1;
     const limitNumber = parseInt(limit) || 20;
@@ -23,15 +27,12 @@ const getAllBanners = catchError(async (req, res, next) => {
 
     // Fetch paginated banners
     const banners = await Banner.find(filter)
-        .sort({ createdAt: -1 }) // Sort by newest first
+        .sort(sort) // Sort by newest first
         .skip(skip)
         .limit(limitNumber);
-    const allBanners = await Banner.find();
-    const bannerCount = allBanners.length
     res.status(200).json({
         status: "Success",
         message: "Banners fetched successfully",
-        bannerCount,
         totalBanners,
         totalPages: Math.ceil(totalBanners / limitNumber),
         page: pageNumber,
@@ -55,16 +56,13 @@ const getAllActiveBanners = catchError(async (req, res, next) => {
         .sort({ createdAt: -1 }) // Sort by newest first
         .skip(skip)
         .limit(limitNumber);
-    const allBanners = await Banner.find();
-    const bannerCount = allBanners.length
     res.status(200).json({
         status: "Success",
         message: "Banners fetched successfully",
-        bannerCount,
         totalBanners,
         totalPages: Math.ceil(totalBanners / limitNumber),
         page: pageNumber,
         banners,
     });
 });
-export { getAllBanners , getAllActiveBanners };
+export { getAllBanners, getAllActiveBanners };

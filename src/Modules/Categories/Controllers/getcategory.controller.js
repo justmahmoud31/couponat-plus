@@ -6,15 +6,19 @@ import { catchError } from "../../../Middlewares/catchError.js";
 import { AppError } from "../../../Utils/AppError.js";
 
 export const getAllCategories = catchError(async (req, res, next) => {
-  let { page = 1, limit = 20 } = req.query;
+  let { page = 1, limit = 20, sort = { createdAt: -1 } } = req.query;
   page = parseInt(page);
   limit = parseInt(limit);
   const skip = (page - 1) * limit;
-
+  if (sort === "asc") {
+    sort = { createdAt: -1 }
+  } else if (sort === "desc") {
+    sort = { createdAt: 1 }
+  }
   // Get all categories with pagination
   const allCategories = await Category.find()
     .select("-sub_categories")
-    .sort({ createdAt: -1 })
+    .sort(sort)
     .populate({
       path: "parent_id",
       select: "name slug image",
@@ -83,7 +87,81 @@ export const getAllCategories = catchError(async (req, res, next) => {
     allCategories: categoriesWithCounts,
   });
 });
+export const getAllActiveCategories = catchError(async (req, res, next) => {
+  let { sort = { createdAt: -1 } } = req.query;
+  if (sort === "asc") {
+    sort = { createdAt: -1 }
+  } else if (sort === "desc") {
+    sort = { createdAt: 1 }
+  }
+  // Get all categories with pagination
+  const allCategories = await Category.find()
+    .select("-sub_categories")
+    .sort(sort)
+    .populate({
+      path: "parent_id",
+      select: "name slug image",
+    })
 
+  // Get total count of categories
+  const totalCategories = await Category.countDocuments();
+
+  // Get all category IDs
+  const categoryIds = allCategories.map((category) => category._id);
+
+  // Batch count products for all categories in one query
+  const productCounts = await Product.aggregate([
+    { $match: { category_id: { $in: categoryIds } } },
+    { $group: { _id: "$category_id", count: { $sum: 1 } } },
+  ]);
+
+  // Batch count stores for all categories in one query
+  const storeCounts = await Store.aggregate([
+    { $unwind: "$categories" },
+    { $match: { categories: { $in: categoryIds } } },
+    { $group: { _id: "$categories", count: { $sum: 1 } } },
+  ]);
+
+  // Batch count coupons for all categories in one query
+  const couponCounts = await Coupon.aggregate([
+    { $match: { category_id: { $in: categoryIds } } },
+    { $group: { _id: "$category_id", count: { $sum: 1 } } },
+  ]);
+
+  // Create lookup maps for quick access
+  const productCountMap = new Map(
+    productCounts.map((item) => [item._id.toString(), item.count])
+  );
+  const storeCountMap = new Map(
+    storeCounts.map((item) => [item._id.toString(), item.count])
+  );
+  const couponCountMap = new Map(
+    couponCounts.map((item) => [item._id.toString(), item.count])
+  );
+
+  // Combine all data
+  const categoriesWithCounts = allCategories.map((category) => {
+    const categoryId = category._id.toString();
+    const productsCount = productCountMap.get(categoryId) || 0;
+    const storesCount = storeCountMap.get(categoryId) || 0;
+    const couponsCount = couponCountMap.get(categoryId) || 0;
+
+    return {
+      ...category.toObject(),
+      productsCount,
+      storesCount,
+      couponsCount,
+      totalCount: productsCount + storesCount + couponsCount,
+    };
+  });
+
+  res.status(200).json({
+    message: "All Categories retrieved successfully",
+    categoriesCount: categoriesWithCounts.length,
+    totalCategories,
+    allCategories: categoriesWithCounts,
+  });
+});
 
 export const getOneCategory = catchError(async (req, res, next) => {
   const { id } = req.params;
