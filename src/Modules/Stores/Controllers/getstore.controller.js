@@ -6,7 +6,7 @@ import { AppError } from "../../../Utils/AppError.js";
 import { Product } from "../../../../database/Models/Product.js";
 
 export const getAllStores = catchError(async (req, res, next) => {
-    const { isDeleted } = req.query;
+    let { isDeleted, page = 1, limit = 10, sort = { createdAt: -1 } } = req.query;
 
     let filter = {};
     if (isDeleted === "true") {
@@ -14,6 +14,12 @@ export const getAllStores = catchError(async (req, res, next) => {
     } else if (isDeleted === "false") {
         filter.isDeleted = false;
     }
+    if (sort === "asc") {
+        sort = { createdAt: -1 }
+    } else if (sort === "desc") {
+        sort = { createdAt: 1 }
+    }
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const stores = await Store.aggregate([
         { $match: filter },
@@ -58,12 +64,88 @@ export const getAllStores = catchError(async (req, res, next) => {
                 numberOfProducts: { $size: "$productsList" },
             },
         },
-        { $sort: { createdAt: -1 } },
+        { $sort: sort },
+        { $skip: skip },
+        { $limit: parseInt(limit) }
     ]);
+
+    const totalStores = await Store.countDocuments(filter);
 
     res.status(200).json({
         message: "Success",
-        totalStores: stores.length,
+        totalStores,
+        totalPages: Math.ceil(totalStores / limit),
+        currentPage: parseInt(page),
+        stores,
+    });
+});
+export const getAllActiveStores = catchError(async (req, res, next) => {
+    let { page = 1, limit = 10, sort = { createdAt: -1 } } = req.query;
+
+    let filter = {};
+    filter.isDeleted = false;
+    if (sort === "asc") {
+        sort = { createdAt: -1 }
+    } else if (sort === "desc") {
+        sort = { createdAt: 1 }
+    }
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const stores = await Store.aggregate([
+        { $match: filter },
+        // Lookup and count categories
+        {
+            $lookup: {
+                from: "categories",
+                localField: "categories",
+                foreignField: "_id",
+                as: "categoriesList",
+            },
+        },
+        // Lookup and count coupons
+        {
+            $lookup: {
+                from: "coupons",
+                localField: "coupons",
+                foreignField: "_id",
+                as: "couponsList",
+            },
+        },
+        // Lookup and count products
+        {
+            $lookup: {
+                from: "products",
+                localField: "products",
+                foreignField: "_id",
+                as: "productsList",
+            },
+        },
+        {
+            $project: {
+                _id: 1,
+                name: 1,
+                logo: 1,
+                description: 1,
+                link: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                numberOfCategories: { $size: "$categoriesList" },
+                numberOfCoupons: { $size: "$couponsList" },
+                numberOfProducts: { $size: "$productsList" },
+            },
+        },
+        { $sort: sort },
+        { $skip: skip },
+        { $limit: parseInt(limit) }
+    ]);
+
+    const totalStores = await Store.countDocuments(filter);
+
+    res.status(200).json({
+        message: "Success",
+        totalStores,
+        totalPages: Math.ceil(totalStores / limit),
+        currentPage: parseInt(page),
         stores,
     });
 });

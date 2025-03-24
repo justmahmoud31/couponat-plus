@@ -5,13 +5,34 @@ import { AppError } from "../../../Utils/AppError.js";
 
 // Get All Rates
 export const getAllRates = catchError(async (req, res) => {
-    const rates = await Rate.find().populate({
-        path: "user_id",
-        select: "-password -otp -otpExpiry -points",
-    });
+    let { page = 1, limit = 10, sort = { createAt: -1 } } = req.query;
 
-    res.status(200).json({ success: true, data: rates });
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    if (sort === "asc") {
+        sort = { createdAt: 1 }
+    } else if (sort === "desc") {
+        sort = { createdAt: -1 }
+    }
+    const rates = await Rate.find()
+        .populate({
+            path: "user_id",
+            select: "-password -otp -otpExpiry -points",
+        })
+        .sort(sort)
+        .skip(skip)
+        .limit(parseInt(limit));
+
+    const totalRates = await Rate.countDocuments();
+
+    res.status(200).json({
+        success: true,
+        totalRates,
+        totalPages: Math.ceil(totalRates / limit),
+        currentPage: parseInt(page),
+        data: rates,
+    });
 });
+
 
 // Get Single Rate by ID
 export const getRateById = catchError(async (req, res) => {
