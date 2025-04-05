@@ -1,4 +1,3 @@
-
 import { catchError } from "../../../Middlewares/catchError.js";
 import fs from "fs";
 import path from "path";
@@ -6,13 +5,15 @@ import { Store } from "../../../../database/Models/Store.js";
 
 export const editstore = catchError(async (req, res) => {
   const { id } = req.params;
-  const { name, description, link, categories } = req.body;
+  const { name, description, link, categories, coupons, products } = req.body;
   const logo = req.file ? req.file.path : null;
+
   // Find the store
   const store = await Store.findById(id);
   if (!store) {
     return res.status(404).json({ message: "Store not found" });
   }
+
   // Delete old logo if new one uploaded
   if (logo) {
     if (store.logo) {
@@ -33,6 +34,8 @@ export const editstore = catchError(async (req, res) => {
   if (description) store.description = description;
   if (link) store.link = link;
   if (categories) store.categories = JSON.parse(categories);
+  if (coupons) store.coupons = JSON.parse(coupons);
+  if (products) store.products = JSON.parse(products);
 
   const updatedStore = await store.save();
 
@@ -41,4 +44,3 @@ export const editstore = catchError(async (req, res) => {
     store: updatedStore,
   });
 });
-
