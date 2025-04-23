@@ -8,74 +8,54 @@ export const editSection = catchError(async (req, res, next) => {
   const { title, description, addItems, deleteItems, isActive, order } =
     req.body;
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
-    const section = await Section.findById(id).session(session);
+    const section = await Section.findById(id);
     if (!section) {
-      await session.abortTransaction();
-      session.endSession();
       return next(new AppError("Section not found", 404));
     }
 
-    // Handle order change separately with proper reordering
     if (order !== undefined) {
       const totalSections = await Section.countDocuments();
 
-      // Validate order is a positive integer
       if (!Number.isInteger(order) || order < 1) {
-        await session.abortTransaction();
-        session.endSession();
         return next(new AppError("Order must be a positive integer", 400));
       }
 
-      // If order exceeds total, cap it at total
       const newOrder = Math.min(order, totalSections);
       const currentOrder = section.order;
 
-      // Only process if order actually changes
       if (newOrder !== currentOrder) {
-        // Temporarily set order to a value outside normal range
-        const tempOrder = totalSections + 1000;
-        await Section.findByIdAndUpdate(id, { order: tempOrder }, { session });
+        const originalItems = [...section.items];
 
-        // Shift other sections based on direction of movement
         if (currentOrder < newOrder) {
-          // Moving down: shift sections in between down
           await Section.updateMany(
             {
               order: { $gt: currentOrder, $lte: newOrder },
               _id: { $ne: id },
             },
-            { $inc: { order: -1 } },
-            { session }
+            { $inc: { order: -1 } }
           );
         } else {
-          // Moving up: shift sections in between up
           await Section.updateMany(
             {
               order: { $gte: newOrder, $lt: currentOrder },
               _id: { $ne: id },
             },
-            { $inc: { order: 1 } },
-            { session }
+            { $inc: { order: 1 } }
           );
         }
 
-        // Update to the new order
         section.order = newOrder;
+
+        section.items = originalItems;
       }
     }
 
-    // Update other fields
     if (title !== undefined) section.title = title;
     if (description !== undefined) section.description = description;
     if (isActive !== undefined) section.isActive = isActive;
 
-    // Add items
     if (addItems && Array.isArray(addItems)) {
-      // Filter out invalid IDs and duplicates
       const validItemsToAdd = addItems
         .filter((item) => mongoose.Types.ObjectId.isValid(item))
         .filter((item) => !section.items.includes(item));
@@ -83,25 +63,19 @@ export const editSection = catchError(async (req, res, next) => {
       section.items.push(...validItemsToAdd);
     }
 
-    // Delete items
     if (deleteItems && Array.isArray(deleteItems)) {
       section.items = section.items.filter(
         (itemId) => !deleteItems.includes(itemId.toString())
       );
     }
 
-    await section.save({ session });
-
-    await session.commitTransaction();
-    session.endSession();
+    await section.save();
 
     return res.status(200).json({
       message: "Section updated successfully",
       section,
     });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
     return next(new AppError(`Error updating section: ${error.message}`, 500));
   }
 });
@@ -118,26 +92,20 @@ export const switchOrder = catchError(async (req, res, next) => {
     return next(new AppError("Both section IDs are required", 400));
   }
 
-  // Use a session to ensure atomic operation
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
     // Find both sections in one query to reduce database calls
     const [firstSection, secondSection] = await Promise.all([
-      Section.findById(firstSectionId).session(session),
-      Section.findById(secondSectionId).session(session),
+      Section.findById(firstSectionId),
+      Section.findById(secondSectionId),
     ]);
 
     if (!firstSection) {
-      await session.abortTransaction();
       return next(
         new AppError(`Section with ID ${firstSectionId} not found`, 404)
       );
     }
 
     if (!secondSection) {
-      await session.abortTransaction();
       return next(
         new AppError(`Section with ID ${secondSectionId} not found`, 404)
       );
@@ -145,7 +113,6 @@ export const switchOrder = catchError(async (req, res, next) => {
 
     // Validate that both sections have valid order values
     if (firstSection.order < 1 || secondSection.order < 1) {
-      await session.abortTransaction();
       return next(new AppError("Invalid order values", 400));
     }
 
@@ -153,10 +120,29 @@ export const switchOrder = catchError(async (req, res, next) => {
     const firstOrder = firstSection.order;
     const secondOrder = secondSection.order;
 
-    // For non-consecutive orders, we need to shift intermediate sections
-    // to maintain the order sequence integrity
+    if (firstOrder === secondOrder) {
+      return res
+        .status(200)
+        .json({ message: "Sections already have the same order" });
+    }
+
+    // Get total count to calculate a safe temporary order
+    const totalSections = await Section.countDocuments();
+    const tempOrder = totalSections + 1000; // Use a value well outside normal range
+
+    // Use two-step update process with temporary order to avoid duplicates
+    // First, move first section to temp order
+    await Section.findByIdAndUpdate(firstSectionId, { order: tempOrder });
+
+    // Then move second section to first order
+    await Section.findByIdAndUpdate(secondSectionId, { order: firstOrder });
+
+    // Finally move first section to second order
+    await Section.findByIdAndUpdate(firstSectionId, { order: secondOrder });
+
+    // For non-consecutive orders, adjust intermediate sections
     if (Math.abs(firstOrder - secondOrder) > 1) {
-      // If first comes before second in ordering
+      // If first came before second in ordering
       if (firstOrder < secondOrder) {
         // Shift sections between first and second down by 1
         await Section.updateMany(
@@ -164,51 +150,29 @@ export const switchOrder = catchError(async (req, res, next) => {
             order: { $gt: firstOrder, $lt: secondOrder },
             _id: { $nin: [firstSectionId, secondSectionId] },
           },
-          { $inc: { order: -1 } },
-          { session }
+          { $inc: { order: -1 } }
         );
-        // Move second to first + 1
-        secondSection.order = firstOrder + 1;
       } else {
-        // First comes after second
+        // First came after second
         // Shift sections between second and first up by 1
         await Section.updateMany(
           {
             order: { $gt: secondOrder, $lt: firstOrder },
             _id: { $nin: [firstSectionId, secondSectionId] },
           },
-          { $inc: { order: 1 } },
-          { session }
+          { $inc: { order: 1 } }
         );
-        // Move first to second + 1
-        firstSection.order = secondOrder + 1;
       }
-    } else {
-      // For consecutive or same orders, just swap
-      const tempOrder = firstSection.order;
-      firstSection.order = secondSection.order;
-      secondSection.order = tempOrder;
     }
-
-    // Save both sections within the transaction
-    await Promise.all([
-      firstSection.save({ session }),
-      secondSection.save({ session }),
-    ]);
-
-    await session.commitTransaction();
-    session.endSession();
 
     res.status(200).json({
       message: "Sections order switched successfully",
       updatedSections: [
-        { id: firstSection._id, newOrder: firstSection.order },
-        { id: secondSection._id, newOrder: secondSection.order },
+        { id: firstSectionId, newOrder: secondOrder },
+        { id: secondSectionId, newOrder: firstOrder },
       ],
     });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
     return next(
       new AppError(`Error switching section orders: ${error.message}`, 500)
     );
@@ -230,15 +194,11 @@ export const shiftSection = catchError(async (req, res, next) => {
     return next(new AppError("Order must be a positive integer", 400));
   }
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
     // Get total count to validate maximum order value
     const totalSections = await Section.countDocuments();
 
     if (newOrder > totalSections) {
-      await session.abortTransaction();
       return next(
         new AppError(
           `New order (${newOrder}) exceeds the total number of sections (${totalSections})`,
@@ -247,17 +207,14 @@ export const shiftSection = catchError(async (req, res, next) => {
       );
     }
 
-    const section = await Section.findById(sectionId).session(session);
+    const section = await Section.findById(sectionId);
     if (!section) {
-      await session.abortTransaction();
       return next(new AppError("Section not found", 404));
     }
 
     const currentOrder = section.order;
 
     if (currentOrder === newOrder) {
-      await session.abortTransaction();
-      session.endSession();
       return res.status(200).json({ message: "No changes needed" });
     }
 
@@ -266,11 +223,7 @@ export const shiftSection = catchError(async (req, res, next) => {
     const tempOrder = totalSections + 1000;
 
     // First set to temp order to avoid conflicts
-    await Section.findByIdAndUpdate(
-      sectionId,
-      { order: tempOrder },
-      { session }
-    );
+    await Section.findByIdAndUpdate(sectionId, { order: tempOrder });
 
     // Shift other sections based on direction
     if (currentOrder < newOrder) {
@@ -280,8 +233,7 @@ export const shiftSection = catchError(async (req, res, next) => {
           order: { $gt: currentOrder, $lte: newOrder },
           _id: { $ne: sectionId },
         },
-        { $inc: { order: -1 } },
-        { session }
+        { $inc: { order: -1 } }
       );
     } else {
       // Moving up: Increment orders of sections between new and current positions
@@ -290,28 +242,18 @@ export const shiftSection = catchError(async (req, res, next) => {
           order: { $gte: newOrder, $lt: currentOrder },
           _id: { $ne: sectionId },
         },
-        { $inc: { order: 1 } },
-        { session }
+        { $inc: { order: 1 } }
       );
     }
 
     // Finally, set to the new order
-    await Section.findByIdAndUpdate(
-      sectionId,
-      { order: newOrder },
-      { session }
-    );
-
-    await session.commitTransaction();
-    session.endSession();
+    await Section.findByIdAndUpdate(sectionId, { order: newOrder });
 
     res.status(200).json({
       message: "Section order updated successfully",
       section: { id: sectionId, previousOrder: currentOrder, newOrder },
     });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
     return next(new AppError(`Error shifting section: ${error.message}`, 500));
   }
 });
@@ -321,40 +263,26 @@ export const shiftSection = catchError(async (req, res, next) => {
  * This is a maintenance function to repair ordering problems
  */
 export const normalizeOrders = catchError(async (req, res, next) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
     // Get all sections sorted by current order
-    const sections = await Section.find().sort({ order: 1 }).session(session);
+    const sections = await Section.find().sort({ order: 1 });
 
     if (!sections.length) {
-      await session.abortTransaction();
-      session.endSession();
       return res.status(200).json({ message: "No sections to normalize" });
     }
 
     // Assign sequential order values
     const updates = sections.map((section, index) => {
-      return Section.findByIdAndUpdate(
-        section._id,
-        { order: index + 1 },
-        { session }
-      );
+      return Section.findByIdAndUpdate(section._id, { order: index + 1 });
     });
 
     await Promise.all(updates);
-
-    await session.commitTransaction();
-    session.endSession();
 
     res.status(200).json({
       message: "Section orders normalized successfully",
       count: sections.length,
     });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
     return next(
       new AppError(`Error normalizing section orders: ${error.message}`, 500)
     );

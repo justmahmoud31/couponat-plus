@@ -4,185 +4,183 @@ import { Store } from "../../../../database/Models/Store.js";
 import { catchError } from "../../../Middlewares/catchError.js";
 import { AppError } from "../../../Utils/AppError.js";
 import { Product } from "../../../../database/Models/Product.js";
+import { Coupon } from "../../../../database/Models/Coupon.js";
 
 export const getAllStores = catchError(async (req, res, next) => {
-    let { isDeleted, page = 1, limit = 10, sort = { createdAt: -1 } } = req.query;
+  let { isDeleted, page = 1, limit = 10, sort = { createdAt: -1 } } = req.query;
 
-    let filter = {};
-    if (isDeleted === "true") {
-        filter.isDeleted = true;
-    } else if (isDeleted === "false") {
-        filter.isDeleted = false;
-    }
-    if (sort === "asc") {
-        sort = { createdAt: -1 }
-    } else if (sort === "desc") {
-        sort = { createdAt: 1 }
-    }
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    const stores = await Store.aggregate([
-        { $match: filter },
-        // Lookup and count categories
-        {
-            $lookup: {
-                from: "categories",
-                localField: "categories",
-                foreignField: "_id",
-                as: "categoriesList",
-            },
-        },
-        // Lookup and count coupons
-        {
-            $lookup: {
-                from: "coupons",
-                localField: "coupons",
-                foreignField: "_id",
-                as: "couponsList",
-            },
-        },
-        // Lookup and count products
-        {
-            $lookup: {
-                from: "products",
-                localField: "products",
-                foreignField: "_id",
-                as: "productsList",
-            },
-        },
-        {
-            $project: {
-                _id: 1,
-                name: 1,
-                logo: 1,
-                description: 1,
-                link: 1,
-                createdAt: 1,
-                updatedAt: 1,
-                numberOfCategories: { $size: "$categoriesList" },
-                numberOfCoupons: { $size: "$couponsList" },
-                numberOfProducts: { $size: "$productsList" },
-            },
-        },
-        { $sort: sort },
-        { $skip: skip },
-        { $limit: parseInt(limit) }
-    ]);
-
-    const totalStores = await Store.countDocuments(filter);
-
-    res.status(200).json({
-        message: "Success",
-        totalStores,
-        totalPages: Math.ceil(totalStores / limit),
-        currentPage: parseInt(page),
-        stores,
-    });
-});
-export const getAllActiveStores = catchError(async (req, res, next) => {
-    let { page = 1, limit = 10, sort = { createdAt: -1 } } = req.query;
-
-    let filter = {};
+  let filter = {};
+  if (isDeleted === "true") {
+    filter.isDeleted = true;
+  } else if (isDeleted === "false") {
     filter.isDeleted = false;
-    if (sort === "asc") {
-        sort = { createdAt: -1 }
-    } else if (sort === "desc") {
-        sort = { createdAt: 1 }
-    }
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+  }
+  if (sort === "asc") {
+    sort = { createdAt: -1 };
+  } else if (sort === "desc") {
+    sort = { createdAt: 1 };
+  }
+  const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const stores = await Store.aggregate([
-        { $match: filter },
-        // Lookup and count categories
-        {
-            $lookup: {
-                from: "categories",
-                localField: "categories",
-                foreignField: "_id",
-                as: "categoriesList",
-            },
-        },
-        // Lookup and count coupons
-        {
-            $lookup: {
-                from: "coupons",
-                localField: "coupons",
-                foreignField: "_id",
-                as: "couponsList",
-            },
-        },
-        // Lookup and count products
-        {
-            $lookup: {
-                from: "products",
-                localField: "products",
-                foreignField: "_id",
-                as: "productsList",
-            },
-        },
-        {
-            $project: {
-                _id: 1,
-                name: 1,
-                logo: 1,
-                description: 1,
-                link: 1,
-                createdAt: 1,
-                updatedAt: 1,
-                numberOfCategories: { $size: "$categoriesList" },
-                numberOfCoupons: { $size: "$couponsList" },
-                numberOfProducts: { $size: "$productsList" },
-            },
-        },
-        { $sort: sort },
-        { $skip: skip },
-        { $limit: parseInt(limit) }
-    ]);
+  const totalStores = await Store.countDocuments(filter);
 
-    const totalStores = await Store.countDocuments(filter);
+  const stores = await Store.find(filter)
+    .sort(sort)
+    .skip(skip)
+    .limit(parseInt(limit))
+    .populate("rates");
 
-    res.status(200).json({
-        message: "Success",
-        totalStores,
-        totalPages: Math.ceil(totalStores / limit),
-        currentPage: parseInt(page),
-        stores,
-    });
+  const storesWithCounts = await Promise.all(
+    stores.map(async (store) => {
+      const [categoriesCount, couponsCount, productsCount, ratesCount] =
+        await Promise.all([
+          Category.countDocuments({ _id: { $in: store.categories } }),
+          Coupon.countDocuments({ store_id: store._id }),
+          Product.countDocuments({ store_id: store._id }),
+          store.rates ? store.rates.length : 0,
+        ]);
+
+      return {
+        ...store.toObject(),
+        categoriesCount,
+        couponsCount,
+        productsCount,
+        ratesCount,
+        totalCount: categoriesCount + couponsCount + productsCount,
+      };
+    })
+  );
+
+  res.status(200).json({
+    message: "Success",
+    totalStores,
+    totalPages: Math.ceil(totalStores / limit),
+    currentPage: parseInt(page),
+    stores: storesWithCounts,
+  });
 });
+
+export const getAllActiveStores = catchError(async (req, res, next) => {
+  let { page = 1, limit = 10, sort = { createdAt: -1 } } = req.query;
+
+  let filter = {};
+  filter.isDeleted = false;
+  if (sort === "asc") {
+    sort = { createdAt: -1 };
+  } else if (sort === "desc") {
+    sort = { createdAt: 1 };
+  }
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+
+  const totalStores = await Store.countDocuments(filter);
+
+  const stores = await Store.find(filter)
+    .sort(sort)
+    .skip(skip)
+    .limit(parseInt(limit))
+    .populate("rates");
+
+  const storesWithCounts = await Promise.all(
+    stores.map(async (store) => {
+      const [categoriesCount, couponsCount, productsCount, ratesCount] =
+        await Promise.all([
+          Category.countDocuments({ _id: { $in: store.categories } }),
+          Coupon.countDocuments({ store_id: store._id }),
+          Product.countDocuments({ store_id: store._id }),
+          store.rates ? store.rates.length : 0,
+        ]);
+
+      return {
+        ...store.toObject(),
+        categoriesCount,
+        couponsCount,
+        productsCount,
+        ratesCount,
+        totalCount: categoriesCount + couponsCount + productsCount,
+      };
+    })
+  );
+
+  res.status(200).json({
+    message: "Success",
+    totalStores,
+    totalPages: Math.ceil(totalStores / limit),
+    currentPage: parseInt(page),
+    stores: storesWithCounts,
+  });
+});
+
 export const getOneStore = catchError(async (req, res, next) => {
-    const oneStore = await Store.findById(req.params.id).populate([
-        { path: 'categories' },
-        { path: 'coupons' },
-        { path: 'rates' },
-        { path: 'products' },  // Added products population
+  const { id } = req.params;
+
+  const oneStore = await Store.findById(id);
+
+  if (!oneStore) {
+    return next(new AppError("Store Not Found", 404));
+  }
+
+  const [categoriesCount, couponsCount, productsCount, ratesCount] =
+    await Promise.all([
+      Category.countDocuments({ _id: { $in: oneStore.categories } }),
+      Coupon.countDocuments({ store_id: id }),
+      Product.countDocuments({ store_id: id }),
+      oneStore.rates ? oneStore.rates.length : 0,
     ]);
 
-    if (!oneStore) {
-        return next(new AppError("Store Not Found", 404));
-    }
+  const populatedStore = await Store.findById(id).populate([
+    { path: "categories" },
+    { path: "coupons" },
+    { path: "rates" },
+    { path: "products" },
+  ]);
 
-    res.status(200).json({
-        message: "Success",
-        oneStore,
-    });
+  const storeWithCounts = {
+    ...populatedStore.toObject(),
+    categoriesCount,
+    couponsCount,
+    productsCount,
+    ratesCount,
+    totalCount: categoriesCount + couponsCount + productsCount,
+  };
+
+  res.status(200).json({
+    message: "Success",
+    oneStore: storeWithCounts,
+  });
 });
 
 export const getStoresByCategory = catchError(async (req, res, next) => {
-    const { slug } = req.params;
-    // Find category by slug
-    const category = await Category.findOne({ slug });
-    if (!category) {
-        return res.status(404).json({ message: "Category not found" });
-    }
-    // Find stores associated with this category and that are not deleted
-    const stores = await Store.find({
-        categories: new mongoose.Types.ObjectId(category._id),
-        isDeleted: false,
-    });
+  const { slug } = req.params;
 
-    res.status(200).json({
-        message: "Stores retrieved successfully",
-        count: stores.length,
-        stores,
-    });
+  const category = await Category.findOne({ slug });
+  if (!category) return next(new AppError("Category not found", 404));
+
+  const stores = await Store.find({
+    categories: { $in: [category._id] },
+    isDeleted: false,
+  }).populate("rates");
+
+  const storesWithCounts = await Promise.all(
+    stores.map(async (store) => {
+      const [couponsCount, productsCount, ratesCount] = await Promise.all([
+        Coupon.countDocuments({ store_id: store._id }),
+        Product.countDocuments({ store_id: store._id }),
+        store.rates ? store.rates.length : 0,
+      ]);
+
+      return {
+        ...store.toObject(),
+        couponsCount,
+        productsCount,
+        ratesCount,
+        totalCount: couponsCount + productsCount,
+      };
+    })
+  );
+
+  res.status(200).json({
+    message: "Success",
+    count: storesWithCounts.length,
+    stores: storesWithCounts,
+  });
 });

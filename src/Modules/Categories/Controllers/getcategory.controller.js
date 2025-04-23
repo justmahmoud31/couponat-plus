@@ -11,11 +11,10 @@ export const getAllCategories = catchError(async (req, res, next) => {
   limit = parseInt(limit);
   const skip = (page - 1) * limit;
   if (sort === "asc") {
-    sort = { createdAt: -1 }
+    sort = { createdAt: -1 };
   } else if (sort === "desc") {
-    sort = { createdAt: 1 }
+    sort = { createdAt: 1 };
   }
-  // Get all categories with pagination
   const allCategories = await Category.find()
     .select("-sub_categories")
     .sort(sort)
@@ -26,19 +25,15 @@ export const getAllCategories = catchError(async (req, res, next) => {
     .skip(skip)
     .limit(limit);
 
-  // Get total count of categories
   const totalCategories = await Category.countDocuments();
 
-  // Get all category IDs
   const categoryIds = allCategories.map((category) => category._id);
 
-  // Batch count products for all categories in one query
   const productCounts = await Product.aggregate([
     { $match: { category_id: { $in: categoryIds } } },
     { $group: { _id: "$category_id", count: { $sum: 1 } } },
   ]);
 
-  // Batch count stores for all categories in one query
   const storeCounts = await Store.aggregate([
     { $unwind: "$categories" },
     { $match: { categories: { $in: categoryIds } } },
@@ -90,9 +85,9 @@ export const getAllCategories = catchError(async (req, res, next) => {
 export const getAllActiveCategories = catchError(async (req, res, next) => {
   let { sort = { createdAt: -1 } } = req.query;
   if (sort === "asc") {
-    sort = { createdAt: -1 }
+    sort = { createdAt: -1 };
   } else if (sort === "desc") {
-    sort = { createdAt: 1 }
+    sort = { createdAt: 1 };
   }
   // Get all categories with pagination
   const allCategories = await Category.find()
@@ -101,7 +96,7 @@ export const getAllActiveCategories = catchError(async (req, res, next) => {
     .populate({
       path: "parent_id",
       select: "name slug image",
-    })
+    });
 
   // Get total count of categories
   const totalCategories = await Category.countDocuments();
@@ -216,7 +211,26 @@ export const getOneCategory = catchError(async (req, res, next) => {
 });
 
 export const getCategoryBySlug = catchError(async (req, res, next) => {
-  const category = await Category.findOne({ slug: req.params.slug });
+  const category = await Category.findOne({ slug: req.params.slug })
+    .populate({
+      path: "sub_categories",
+      populate: {
+        path: "sub_categories",
+        populate: {
+          path: "sub_categories",
+        },
+      },
+    })
+    .populate({
+      path: "parent_id",
+      populate: {
+        path: "sub_categories",
+        select: "name slug image",
+      },
+      select: "name slug image sub_categories",
+      strictPopulate: false,
+    });
+
   if (!category) {
     return next(new AppError("Category Not Found", 404));
   }

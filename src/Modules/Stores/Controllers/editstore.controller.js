@@ -6,7 +6,11 @@ import { Store } from "../../../../database/Models/Store.js";
 export const editstore = catchError(async (req, res) => {
   const { id } = req.params;
   const { name, description, link, categories, coupons, products } = req.body;
-  const logo = req.file ? req.file.path : null;
+  const logo = req.file
+    ? req.file.path
+    : req.body.logo === "null"
+    ? null
+    : undefined;
 
   // Find the store
   const store = await Store.findById(id);
@@ -14,19 +18,23 @@ export const editstore = catchError(async (req, res) => {
     return res.status(404).json({ message: "Store not found" });
   }
 
-  // Delete old logo if new one uploaded
-  if (logo) {
-    if (store.logo) {
-      const oldLogoPath = path.resolve(store.logo);
-      fs.unlink(oldLogoPath, (err) => {
-        if (err) {
-          console.error("Error deleting old logo:", err.message);
-        } else {
+  // Handle logo
+  if (logo !== undefined) {
+    // Only process if logo was included in the request
+    // If there's an existing logo and we're changing it (either to a new one or removing it)
+    if (store.logo && (req.file || logo === null)) {
+      try {
+        const oldLogoPath = path.resolve(store.logo);
+        if (fs.existsSync(oldLogoPath)) {
+          fs.unlinkSync(oldLogoPath);
           console.log("Old logo deleted successfully.");
         }
-      });
+      } catch (err) {
+        console.error("Error deleting old logo:", err.message);
+      }
     }
-    store.logo = logo; // Set the new logo
+    // Set the new logo value (can be a new path or null)
+    store.logo = logo;
   }
 
   // Update only if values exist

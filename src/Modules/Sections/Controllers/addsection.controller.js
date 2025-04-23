@@ -26,33 +26,19 @@ export const addSection = catchError(async (req, res, next) => {
     event_id,
   } = req.body;
 
-  // Start a session to ensure data consistency
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
-    // Count total sections to validate order value
     const totalSections = await Section.countDocuments();
 
     let newOrder = order;
 
-    // Handle different order scenarios
     if (newOrder === undefined) {
-      // If no order specified, add to the end
-      const lastSection = await Section.findOne()
-        .sort({ order: -1 })
-        .session(session);
+      const lastSection = await Section.findOne().sort({ order: -1 });
       newOrder = lastSection ? lastSection.order + 1 : 1;
     } else {
-      // Validate order is a positive integer
       if (!Number.isInteger(newOrder) || newOrder < 1) {
-        await session.abortTransaction();
-        session.endSession();
         return next(new AppError("Order must be a positive integer", 400));
       }
 
-      // If order exceeds total + 1, automatically adjust to the end
-      // This handles cases like trying to set order=9 when only 5 sections exist
       if (newOrder > totalSections + 1) {
         console.log(
           `Order value ${newOrder} exceeds maximum allowed (${
@@ -62,12 +48,10 @@ export const addSection = catchError(async (req, res, next) => {
         newOrder = totalSections + 1;
       }
 
-      // If inserting at a specific position, shift others down
       if (newOrder <= totalSections) {
         await Section.updateMany(
           { order: { $gte: newOrder } },
-          { $inc: { order: 1 } },
-          { session }
+          { $inc: { order: 1 } }
         );
       }
     }
@@ -88,10 +72,7 @@ export const addSection = catchError(async (req, res, next) => {
       isActive: isActive !== undefined ? isActive : true,
     });
 
-    await newSection.save({ session });
-
-    await session.commitTransaction();
-    session.endSession();
+    await newSection.save();
 
     res.status(201).json({
       message: "Section created successfully",
@@ -102,9 +83,6 @@ export const addSection = catchError(async (req, res, next) => {
       },
     });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-
     // Handle duplicate order error explicitly
     if (error.code === 11000 && error.keyPattern && error.keyPattern.order) {
       return next(

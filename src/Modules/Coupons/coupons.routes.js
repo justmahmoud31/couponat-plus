@@ -1,21 +1,72 @@
-import express from 'express';
-import { addCoupon } from './Controllers/AddCopoun.controller.js';
-import { mixedFiles, singleFile } from '../../Config/multerConfig.js';
-import { getAllCopouns, getOneCopoun } from './Controllers/getCopouns.controller.js';
-import { deleteCoupon, deleteOneCoupon } from './Controllers/deleteCopoun.controller.js';
-import { authorizeRoles, isAuthenticated } from '../../Middlewares/auth.middleware.js';
-import { updateCoupon } from './Controllers/editCopoun.controller.js';
+import express from "express";
+import { addCoupon } from "./Controllers/AddCopoun.controller.js";
+import { mixedFiles, singleFile } from "../../Config/multerConfig.js";
+import {
+  getAllCopouns,
+  getOneCopoun,
+} from "./Controllers/getCopouns.controller.js";
+import {
+  deleteCoupon,
+  deleteOneCoupon,
+} from "./Controllers/deleteCopoun.controller.js";
+import {
+  authorizeRoles,
+  isAuthenticated,
+} from "../../Middlewares/auth.middleware.js";
+import { updateCoupon } from "./Controllers/editCopoun.controller.js";
+import {
+  getMostUsedCoupons,
+  getNewCoupons,
+  getExpiringSoonCoupons,
+  trackCouponUsage,
+} from "./Controllers/couponStats.controller.js";
+
 const router = express.Router();
 router.post(
-    "/addcoupon",
-    isAuthenticated,
-    authorizeRoles("admin"),
-    mixedFiles([{ name: "image", maxCount: 1 }, { name: "cover_image", maxCount: 1 }], "coupons"),
-    addCoupon
+  "/addcoupon",
+  isAuthenticated,
+  authorizeRoles("admin"),
+  mixedFiles(
+    [
+      { name: "image", maxCount: 1 },
+      { name: "cover_image", maxCount: 1 },
+    ],
+    "coupons"
+  ),
+  addCoupon
 );
-router.get('/', getAllCopouns)
-router.get('/onecopoun/:id', getOneCopoun);
-router.delete('/deletecopoun', isAuthenticated, authorizeRoles("admin"), deleteCoupon);
-router.delete('/deletecopoun/:id', isAuthenticated, authorizeRoles("admin"), deleteOneCoupon);
-router.patch("/editcoupon/:id", isAuthenticated, authorizeRoles("admin"), singleFile("image", "coupons"), updateCoupon);
+router.get("/", getAllCopouns);
+router.get("/onecopoun/:id", getOneCopoun);
+router.delete(
+  "/deletecopoun",
+  isAuthenticated,
+  authorizeRoles("admin"),
+  deleteCoupon
+);
+router.delete(
+  "/deletecopoun/:id",
+  isAuthenticated,
+  authorizeRoles("admin"),
+  deleteOneCoupon
+);
+router.patch(
+  "/editcoupon/:id",
+  isAuthenticated,
+  authorizeRoles("admin"),
+  mixedFiles(
+    [
+      { name: "image", maxCount: 1 },
+      { name: "cover_image", maxCount: 1 },
+    ],
+    "coupons"
+  ),
+  updateCoupon
+);
+
+// New statistics and tracking routes
+router.get("/most-used", getMostUsedCoupons);
+router.get("/new", getNewCoupons);
+router.get("/expiring-soon", getExpiringSoonCoupons);
+router.post("/track-usage/:id", trackCouponUsage);
+
 export default router;

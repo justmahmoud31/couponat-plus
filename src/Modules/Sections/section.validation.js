@@ -28,17 +28,29 @@ export const sectionValidation = Joi.object({
       "Marketing",
       "Stores",
       "TwoBanner",
-      "Products"
+      "Products",
+      "bestStoresCategories",
+      "bestCouponCategories",
+      "bestDealsCategory"
     )
     .required()
     .messages({
       "any.required": "Type is required",
       "any.only":
-        "Type must be one of Slider, BannerText, Categories, Coupons, Events, Marketing, Stores, TwoBanner",
+        "Type must be one of Slider, BannerText, Categories, Coupons, Events, Marketing, Stores, TwoBanner, Products, bestStoresCategories, bestCouponCategories, bestDealsCategory",
     }),
   category_id: objectId.allow(null, ""),
   items: Joi.alternatives().conditional("type", {
-    is: Joi.valid("Categories", "Coupons", "Stores", "Products", "Events"),
+    is: Joi.valid(
+      "Categories",
+      "Coupons",
+      "Stores",
+      "Products",
+      "Events",
+      "Slider",
+      "BannerText",
+      "TwoBanner"
+    ),
     then: Joi.array().items(objectId).min(1).required().messages({
       "array.min": "At least one item is required for this type",
       "any.required": "Items are required for this type",
