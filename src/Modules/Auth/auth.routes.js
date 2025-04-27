@@ -31,8 +31,8 @@ const router = express.Router();
 router.post("/signup", singleFile("profilePicture", "user"), signup);
 router.post(
   "/addadmin",
-  isAuthenticated,
-  authorizeRoles("admin"),
+  // isAuthenticated,
+  // authorizeRoles("admin"),
   singleFile("profilePicture", "user"),
   addAdmin
 );
