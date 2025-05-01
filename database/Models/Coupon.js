@@ -11,6 +11,11 @@ const CouponSchema = mongoose.Schema(
     category_id: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
     store_id: { type: mongoose.Schema.Types.ObjectId, ref: "Store" },
     discount: { type: Number, default: 0 },
+    discountType: {
+      type: String,
+      enum: ["percentage", "fixed"],
+      default: "percentage",
+    },
     type: {
       type: String,
       enum: ["show", "cover", "show_half"],
@@ -24,6 +29,8 @@ const CouponSchema = mongoose.Schema(
     clickCount: { type: Number, default: 0 },
     lastActivityDate: { type: Date },
     isVerified: { type: Boolean, default: false },
+    highlightText: { type: String, trim: true },
+    tabCategory: { type: String },
   },
   { timestamps: true }
 );

@@ -5,8 +5,16 @@ import mongoose from "mongoose";
 
 export const editSection = catchError(async (req, res, next) => {
   const { id } = req.params;
-  const { title, description, addItems, deleteItems, isActive, order } =
-    req.body;
+  const {
+    title,
+    description,
+    addItems,
+    deleteItems,
+    isActive,
+    order,
+    items,
+    type,
+  } = req.body;
 
   try {
     const section = await Section.findById(id);
@@ -46,7 +54,6 @@ export const editSection = catchError(async (req, res, next) => {
         }
 
         section.order = newOrder;
-
         section.items = originalItems;
       }
     }
@@ -54,28 +61,52 @@ export const editSection = catchError(async (req, res, next) => {
     if (title !== undefined) section.title = title;
     if (description !== undefined) section.description = description;
     if (isActive !== undefined) section.isActive = isActive;
+    if (type !== undefined) section.type = type;
 
-    if (addItems && Array.isArray(addItems)) {
+    if ("items" in req.body) {
+      if (Array.isArray(items)) {
+        const validItems = items
+          .filter((item) => mongoose.Types.ObjectId.isValid(item))
+          .map((item) => new mongoose.Types.ObjectId(item)); // Added 'new' here
+
+        section.items = validItems;
+        console.log(
+          "Section items replaced with:",
+          validItems.map((id) => id.toString())
+        );
+      } else {
+        // If items is present but not an array, set it to an empty array
+        section.items = [];
+        console.log("Section items cleared - empty array set");
+      }
+    }
+    else if (addItems && Array.isArray(addItems)) {
       const validItemsToAdd = addItems
         .filter((item) => mongoose.Types.ObjectId.isValid(item))
-        .filter((item) => !section.items.includes(item));
+        .map((item) => new mongoose.Types.ObjectId(item)); // Added 'new' here
 
       section.items.push(...validItemsToAdd);
-    }
-
-    if (deleteItems && Array.isArray(deleteItems)) {
+      console.log("Items added to section:", validItemsToAdd);
+    } else if (deleteItems && Array.isArray(deleteItems)) {
       section.items = section.items.filter(
         (itemId) => !deleteItems.includes(itemId.toString())
       );
+      console.log("Items removed from section:", deleteItems);
     }
 
+    // Save the updated section document
     await section.save();
+    console.log(
+      "Final section items after save:",
+      section.items.map((id) => id.toString())
+    );
 
     return res.status(200).json({
       message: "Section updated successfully",
       section,
     });
   } catch (error) {
+    console.error("Error in editSection:", error);
     return next(new AppError(`Error updating section: ${error.message}`, 500));
   }
 });

@@ -5,6 +5,7 @@ import { addBanner } from './Controllers/addbanner.controller.js';
 import { deleteBanner } from './Controllers/deletebanner.controller.js';
 import { editBanner } from './Controllers/editbanner.controller.js';
 import { getAllActiveBanners, getAllBanners } from './Controllers/getbanners.controller.js';
+
 const router = express.Router();
 router.get('/', isAuthenticated, authorizeRoles("admin"), getAllBanners);
 router.get('/all', getAllActiveBanners);

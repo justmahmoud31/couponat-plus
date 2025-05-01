@@ -7,7 +7,16 @@ const BannerSchema = new mongoose.Schema(
     images: [{ type: String }],
     type: {
       type: String,
-      enum: ["slider", "static", "two", "bannerText"],
+      enum: [
+        "slider",
+        "static",
+        "twoBanner",
+        "bannerText",
+        "Slider",
+        "Static",
+        "TwoBanner",
+        "BannerText",
+      ],
       required: true,
     },
     link: { type: String },

@@ -5,85 +5,326 @@ import { Store } from "../../../../database/Models/Store.js";
 import { catchError } from "../../../Middlewares/catchError.js";
 import { Product } from "../../../../database/Models/Product.js";
 import { Event } from "../../../../database/Models/Events.js";
+import mongoose from "mongoose";
+
+// Helper function to safely retrieve category items with all fields
+const fetchFullCategories = async (categoryIds) => {
+  try {
+    // Using aggregation pipeline to ensure we get all category fields
+    const categories = await Category.aggregate([
+      {
+        $match: {
+          _id: {
+            $in: categoryIds.map((id) =>
+              mongoose.Types.ObjectId.isValid(id)
+                ? new mongoose.Types.ObjectId(id)
+                : id
+            ),
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: "categories", // collection name in MongoDB
+          localField: "parent_id",
+          foreignField: "_id",
+          as: "parent_info",
+        },
+      },
+      {
+        $lookup: {
+          from: "categories", // collection name in MongoDB
+          localField: "sub_categories",
+          foreignField: "_id",
+          as: "sub_categories_info",
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          slug: 1,
+          image: 1,
+          best: 1,
+          parent_id: 1,
+          sub_categories: 1,
+          count: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          parent_info: 1,
+          sub_categories_info: 1,
+        },
+      },
+    ]);
+
+    console.log(`Fetched ${categories.length} categories with all fields`);
+    // Log the first category to verify all fields are present
+    if (categories.length > 0) {
+      console.log("First category:", JSON.stringify(categories[0], null, 2));
+    }
+
+    return categories;
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    return [];
+  }
+};
+
+// Helper function to fetch coupons with complete details and organize by category
+const fetchCouponsWithDetails = async (couponIds) => {
+  try {
+    // Get coupons with full details including populated store and category
+    const coupons = await Coupon.find({ _id: { $in: couponIds } })
+      .populate({
+        path: "store_id",
+        select: "name logo numberOfCoupons",
+      })
+      .populate({
+        path: "category_id",
+        select: "name slug image",
+      });
+
+    // Group coupons by categories for easy tab organization in frontend
+    const couponsByCategory = {};
+    const allCoupons = [];
+
+    for (const coupon of coupons) {
+      const couponObj = coupon.toObject();
+      allCoupons.push(couponObj);
+
+      // Categorize coupons
+      if (coupon.category_id) {
+        const categoryId = coupon.category_id._id.toString();
+        if (!couponsByCategory[categoryId]) {
+          couponsByCategory[categoryId] = {
+            _id: categoryId,
+            name: coupon.category_id.name,
+            slug: coupon.category_id.slug,
+            image: coupon.category_id.image,
+            coupons: [],
+          };
+        }
+        couponsByCategory[categoryId].coupons.push(couponObj);
+      }
+    }
+
+    // Convert to array for easier consumption in frontend
+    const categories = Object.values(couponsByCategory);
+
+    return {
+      coupons: allCoupons,
+      couponsByCategory: categories,
+    };
+  } catch (error) {
+    console.error("Error fetching coupons with details:", error);
+    return { coupons: [], couponsByCategory: [] };
+  }
+};
+
+// Helper function to fetch events with complete details
+const fetchEventsWithDetails = async (eventIds) => {
+  try {
+    // Get events with full details including populated category
+    const events = await Event.find({ _id: { $in: eventIds } }).populate({
+      path: "category_id",
+      select: "name slug image",
+    });
+
+    // Group events by categories for easy tab organization in frontend
+    const eventsByCategory = {};
+    const allEvents = [];
+
+    for (const event of events) {
+      const eventObj = event.toObject();
+      allEvents.push(eventObj);
+
+      // Categorize events
+      if (event.category_id) {
+        const categoryId = event.category_id._id.toString();
+        if (!eventsByCategory[categoryId]) {
+          eventsByCategory[categoryId] = {
+            _id: categoryId,
+            name: event.category_id.name,
+            slug: event.category_id.slug,
+            image: event.category_id.image,
+            events: [],
+          };
+        }
+        eventsByCategory[categoryId].events.push(eventObj);
+      }
+    }
+
+    // Convert to array for easier consumption in frontend
+    const categories = Object.values(eventsByCategory);
+
+    return {
+      events: allEvents,
+      categories: categories,
+    };
+  } catch (error) {
+    console.error("Error fetching events with details:", error);
+    return { events: [], categories: [] };
+  }
+};
 
 const getSection = catchError(async (req, res, next) => {
-    const { type, isActive } = req.query;
-    const filter = {};
-    if (type) filter.type = type;
-    if (isActive !== undefined) filter.isActive = isActive === "true";
+  const { type, isActive } = req.query;
+  const filter = {};
+  if (type) filter.type = type;
+  if (isActive !== undefined) filter.isActive = isActive === "true";
 
-    let sections = await Section.find(filter)
-        .populate([
-            { path: "banner_id", select: "title imageUrl" },
-            { path: "store_id", select: "name numberOfCoupons" },
-            { path: "category_id", select: "name" },
-        ])
-        .sort({ order: 1 });
+  let sections = await Section.find(filter)
+    .populate([
+      { path: "banner_id", select: "title imageUrl" },
+      { path: "store_id", select: "name numberOfCoupons" },
+      { path: "category_id", select: "name" },
+    ])
+    .sort({ order: 1 });
 
-    // Populate `items` dynamically based on the section type
-    sections = await Promise.all(sections.map(async (section) => {
-        if (["Categories", "Coupons", "Stores", "Products", "Events"].includes(section.type) && section.items && section.items.length) {
-            let itemsData = [];
-            if (section.type === "Categories") {
-                itemsData = await Category.find({ _id: { $in: section.items } }, "name imageUrl");
-            } else if (section.type === "Coupons") {
-                itemsData = await Coupon.find({ _id: { $in: section.items } }, "code title cover_image");
-            } else if (section.type === "Stores") {
-                itemsData = await Store.find({ _id: { $in: section.items } }, "name logo numberOfCoupons");
-            } else if (section.type === "Products") {
-                itemsData = await Product.find({ _id: { $in: section.items } }, "cover_image price")
-            } else if (section.type === "Events") {
-                itemsData = await Event.find({ _id: { $in: section.items } }, "cover_image name link")
-            }
-            return { ...section.toObject(), items: itemsData };
-        }
-        return section;
-    }));
+  // Create a new array with processed sections
+  const processedSections = await Promise.all(
+    sections.map(async (section) => {
+      const sectionObj = section.toObject();
 
-    res.status(200).json({
-        message: "Sections retrieved successfully",
-        count: sections.length,
-        sections,
-    });
+      if (!section.items || section.items.length === 0) {
+        return sectionObj;
+      }
+
+      if (section.type === "Categories") {
+        // Use our helper function to fetch full category data
+        const categoryItems = await fetchFullCategories(section.items);
+        return {
+          ...sectionObj,
+          items: categoryItems,
+        };
+      } else if (section.type === "Coupons") {
+        const { coupons, couponsByCategory } = await fetchCouponsWithDetails(
+          section.items
+        );
+        return {
+          ...sectionObj,
+          items: coupons,
+          categories: couponsByCategory,
+        };
+      } else if (section.type === "Stores") {
+        const stores = await Store.find(
+          { _id: { $in: section.items } },
+          "name logo numberOfCoupons"
+        );
+        return {
+          ...sectionObj,
+          items: stores.map((store) => store.toObject()),
+        };
+      } else if (section.type === "Products") {
+        const products = await Product.find(
+          { _id: { $in: section.items } },
+          "cover_image price"
+        );
+        return {
+          ...sectionObj,
+          items: products.map((product) => product.toObject()),
+        };
+      } else if (section.type === "Events") {
+        // Use the new helper function for events
+        const { events, categories } = await fetchEventsWithDetails(
+          section.items
+        );
+        return {
+          ...sectionObj,
+          items: events,
+          categories: categories,
+        };
+      }
+
+      // Default: return the section as is
+      return sectionObj;
+    })
+  );
+
+  res.status(200).json({
+    message: "Sections retrieved successfully",
+    count: processedSections.length,
+    sections: processedSections,
+  });
 });
+
 const getActiveSections = catchError(async (req, res, next) => {
-    const { type } = req.query;
-    const filter = { isActive: true }; // Only fetch active sections
-    if (type) filter.type = type;
+  const { type } = req.query;
+  const filter = { isActive: true }; // Only fetch active sections
+  if (type) filter.type = type;
 
-    let sections = await Section.find(filter)
-        .populate([
-            { path: "banner_id", select: "title imageUrl" },
-            { path: "store_id", select: "name numberOfCoupons" },
-            { path: "category_id", select: "name" },
-        ])
-        .sort({ order: 1 });
+  let sections = await Section.find(filter)
+    .populate([
+      { path: "banner_id", select: "title imageUrl" },
+      { path: "store_id", select: "name numberOfCoupons" },
+      { path: "category_id", select: "name" },
+    ])
+    .sort({ order: 1 });
 
-    // Populate `items` dynamically based on the section type
-    sections = await Promise.all(sections.map(async (section) => {
-        if (["Categories", "Coupons", "Stores", "Products", "Events"].includes(section.type) && section.items?.length) {
-            let itemsData = [];
-            if (section.type === "Categories") {
-                itemsData = await Category.find({ _id: { $in: section.items } }, "name imageUrl");
-            } else if (section.type === "Coupons") {
-                itemsData = await Coupon.find({ _id: { $in: section.items } }, "code title cover_image");
-            } else if (section.type === "Stores") {
-                itemsData = await Store.find({ _id: { $in: section.items } }, "name logo numberOfCoupons");
-            } else if (section.type === "Products") {
-                itemsData = await Product.find({ _id: { $in: section.items } }, "cover_image price");
-            } else if (section.type === "Events") {
-                itemsData = await Event.find({ _id: { $in: section.items } }, "cover_image name link");
-            }
-            return { ...section.toObject(), items: itemsData };
-        }
-        return section;
-    }));
+  // Create a new array with processed sections
+  const processedSections = await Promise.all(
+    sections.map(async (section) => {
+      const sectionObj = section.toObject();
 
-    res.status(200).json({
-        message: "Active sections retrieved successfully",
-        count: sections.length,
-        sections,
-    });
+      if (!section.items || section.items.length === 0) {
+        return sectionObj;
+      }
+
+      if (section.type === "Categories") {
+        // Use our helper function to fetch full category data
+        const categoryItems = await fetchFullCategories(section.items);
+        return {
+          ...sectionObj,
+          items: categoryItems,
+        };
+      } else if (section.type === "Coupons") {
+        const { coupons, couponsByCategory } = await fetchCouponsWithDetails(
+          section.items
+        );
+        return {
+          ...sectionObj,
+          items: coupons,
+          categories: couponsByCategory,
+        };
+      } else if (section.type === "Stores") {
+        const stores = await Store.find(
+          { _id: { $in: section.items } },
+          "name logo numberOfCoupons"
+        );
+        return {
+          ...sectionObj,
+          items: stores.map((store) => store.toObject()),
+        };
+      } else if (section.type === "Products") {
+        const products = await Product.find(
+          { _id: { $in: section.items } },
+          "cover_image price"
+        );
+        return {
+          ...sectionObj,
+          items: products.map((product) => product.toObject()),
+        };
+      } else if (section.type === "Events") {
+        const { events, categories } = await fetchEventsWithDetails(
+          section.items
+        );
+        return {
+          ...sectionObj,
+          items: events,
+          categories: categories,
+        };
+      }
+
+      // Default: return the section as is
+      return sectionObj;
+    })
+  );
+
+  res.status(200).json({
+    message: "Active sections retrieved successfully",
+    count: processedSections.length,
+    sections: processedSections,
+  });
 });
 
 export default { getSection, getActiveSections };

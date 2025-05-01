@@ -13,8 +13,13 @@ import {
 } from "./Controllers/editsection.controller.js";
 import { deleteSection } from "./Controllers/deletesection.controller.js";
 const router = express.Router();
-router.get("/", isAuthenticated, authorizeRoles("admin"), getsectionController.getSection);
-router.get('/all', getsectionController.getActiveSections);
+router.get(
+  "/",
+  isAuthenticated,
+  authorizeRoles("admin"),
+  getsectionController.getSection
+);
+router.get("/all", getsectionController.getActiveSections);
 router.post("/", isAuthenticated, authorizeRoles("admin"), addSection);
 router.patch(
   "/switch-order",
@@ -34,6 +39,6 @@ router.patch(
   authorizeRoles("admin"),
   normalizeOrders
 );
-router.patch("/:id", isAuthenticated, authorizeRoles("admin"), editSection);
+router.put("/:id", isAuthenticated, authorizeRoles("admin"), editSection);
 router.delete("/:id", isAuthenticated, authorizeRoles("admin"), deleteSection);
 export default router;

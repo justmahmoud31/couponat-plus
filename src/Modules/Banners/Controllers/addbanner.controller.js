@@ -8,7 +8,7 @@ const addBanner = catchError(async (req, res, next) => {
     return res.status(400).json({ message: "Title and type are required." });
   }
 
-  const validTypes = ["slider", "static", "two", "bannerText"];
+  const validTypes = ["slider", "static", "TwoBanner", "bannerText"];
   if (!validTypes.includes(type)) {
     return res.status(400).json({ message: "Invalid banner type." });
   }

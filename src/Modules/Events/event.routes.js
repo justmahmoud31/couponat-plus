@@ -9,10 +9,15 @@ import {
   getAllActiveEvents,
   getAllEvents,
   getEventById,
+  getUpcomingEvents,
+  getEventsByCategory,
 } from "./Controllers/getevent.controller.js";
 import { editEvent } from "./Controllers/editevent.controller.js";
 import { deleteEvent } from "./Controllers/deleteevent.controller.js";
+
 const router = express.Router();
+
+// Admin routes
 router.post(
   "/",
   singleFile("cover_img", "events"),
@@ -29,6 +34,11 @@ router.patch(
 );
 router.delete("/:id", isAuthenticated, authorizeRoles("admin"), deleteEvent);
 router.get("/", isAuthenticated, authorizeRoles("admin"), getAllEvents);
+
+// Public routes
 router.get("/all", getAllActiveEvents);
+router.get("/upcoming", getUpcomingEvents);
+router.get("/category/:categoryId", getEventsByCategory);
 router.get("/:id", getEventById);
+
 export default router;

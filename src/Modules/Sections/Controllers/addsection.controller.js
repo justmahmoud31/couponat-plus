@@ -2,7 +2,6 @@ import { Section } from "../../../../database/Models/Section.js";
 import { catchError } from "../../../Middlewares/catchError.js";
 import { sectionValidation } from "../section.validation.js";
 import { AppError } from "../../../Utils/AppError.js";
-import mongoose from "mongoose";
 
 export const addSection = catchError(async (req, res, next) => {
   // Validate input
