@@ -25,7 +25,6 @@ const getAllCopouns = catchError(async (req, res, next) => {
     }
   }
 
-  // Filter by store if provided
   if (storeId) {
     if (mongoose.Types.ObjectId.isValid(storeId)) {
       filter.store_id = new mongoose.Types.ObjectId(storeId);
@@ -37,10 +36,8 @@ const getAllCopouns = catchError(async (req, res, next) => {
   const sortOrder = sort === "asc" ? 1 : -1;
   const skip = (parseInt(page) - 1) * parseInt(limit);
 
-  // Get total count of coupons
   const totalCoupons = await Coupon.countDocuments(filter);
 
-  // Fetch paginated coupons
   const allCoupons = await Coupon.find(filter)
     .sort({ createdAt: sortOrder })
     .skip(skip)
@@ -62,22 +59,21 @@ const getOneCopoun = catchError(async (req, res, next) => {
   const { id } = req.params;
 
   let coupon = await Coupon.findById(id)
-    .populate("category_id", "name") // ✅ Get only the name
+    .populate("category_id", "name")
     .populate("store_id");
 
   if (!coupon) {
     return next(new AppError("Coupon not found or Invalid Id", 400));
   }
 
-  // ✅ Fetch related coupons (same category or same store), excluding itself
   const relatedCoupons = await Coupon.find({
-    _id: { $ne: coupon._id }, // Exclude the current coupon
+    _id: { $ne: coupon._id },
     $or: [
       { category_id: coupon.category_id?._id },
       { store_id: coupon.store_id?._id },
     ],
   })
-    .populate("category_id", "name") // ✅ Get only the name
+    .populate("category_id", "name")
     .populate("store_id");
   coupon = coupon.toObject();
   coupon.relatedCoupons = relatedCoupons;

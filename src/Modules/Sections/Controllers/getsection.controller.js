@@ -7,10 +7,8 @@ import { Product } from "../../../../database/Models/Product.js";
 import { Event } from "../../../../database/Models/Events.js";
 import mongoose from "mongoose";
 
-// Helper function to safely retrieve category items with all fields
 const fetchFullCategories = async (categoryIds) => {
   try {
-    // Using aggregation pipeline to ensure we get all category fields
     const categories = await Category.aggregate([
       {
         $match: {
@@ -70,10 +68,8 @@ const fetchFullCategories = async (categoryIds) => {
   }
 };
 
-// Helper function to fetch coupons with complete details and organize by category
 const fetchCouponsWithDetails = async (couponIds) => {
   try {
-    // Get coupons with full details including populated store and category
     const coupons = await Coupon.find({ _id: { $in: couponIds } })
       .populate({
         path: "store_id",
@@ -84,7 +80,6 @@ const fetchCouponsWithDetails = async (couponIds) => {
         select: "name slug image",
       });
 
-    // Group coupons by categories for easy tab organization in frontend
     const couponsByCategory = {};
     const allCoupons = [];
 
@@ -92,7 +87,6 @@ const fetchCouponsWithDetails = async (couponIds) => {
       const couponObj = coupon.toObject();
       allCoupons.push(couponObj);
 
-      // Categorize coupons
       if (coupon.category_id) {
         const categoryId = coupon.category_id._id.toString();
         if (!couponsByCategory[categoryId]) {
@@ -108,7 +102,6 @@ const fetchCouponsWithDetails = async (couponIds) => {
       }
     }
 
-    // Convert to array for easier consumption in frontend
     const categories = Object.values(couponsByCategory);
 
     return {
@@ -121,16 +114,13 @@ const fetchCouponsWithDetails = async (couponIds) => {
   }
 };
 
-// Helper function to fetch events with complete details
 const fetchEventsWithDetails = async (eventIds) => {
   try {
-    // Get events with full details including populated category
     const events = await Event.find({ _id: { $in: eventIds } }).populate({
       path: "category_id",
       select: "name slug image",
     });
 
-    // Group events by categories for easy tab organization in frontend
     const eventsByCategory = {};
     const allEvents = [];
 
@@ -138,7 +128,6 @@ const fetchEventsWithDetails = async (eventIds) => {
       const eventObj = event.toObject();
       allEvents.push(eventObj);
 
-      // Categorize events
       if (event.category_id) {
         const categoryId = event.category_id._id.toString();
         if (!eventsByCategory[categoryId]) {
@@ -154,7 +143,6 @@ const fetchEventsWithDetails = async (eventIds) => {
       }
     }
 
-    // Convert to array for easier consumption in frontend
     const categories = Object.values(eventsByCategory);
 
     return {
@@ -181,7 +169,6 @@ const getSection = catchError(async (req, res, next) => {
     ])
     .sort({ order: 1 });
 
-  // Create a new array with processed sections
   const processedSections = await Promise.all(
     sections.map(async (section) => {
       const sectionObj = section.toObject();
@@ -191,7 +178,6 @@ const getSection = catchError(async (req, res, next) => {
       }
 
       if (section.type === "Categories") {
-        // Use our helper function to fetch full category data
         const categoryItems = await fetchFullCategories(section.items);
         return {
           ...sectionObj,
@@ -225,7 +211,6 @@ const getSection = catchError(async (req, res, next) => {
           items: products.map((product) => product.toObject()),
         };
       } else if (section.type === "Events") {
-        // Use the new helper function for events
         const { events, categories } = await fetchEventsWithDetails(
           section.items
         );
@@ -236,7 +221,6 @@ const getSection = catchError(async (req, res, next) => {
         };
       }
 
-      // Default: return the section as is
       return sectionObj;
     })
   );
@@ -250,7 +234,7 @@ const getSection = catchError(async (req, res, next) => {
 
 const getActiveSections = catchError(async (req, res, next) => {
   const { type } = req.query;
-  const filter = { isActive: true }; // Only fetch active sections
+  const filter = { isActive: true };
   if (type) filter.type = type;
 
   let sections = await Section.find(filter)
@@ -261,7 +245,6 @@ const getActiveSections = catchError(async (req, res, next) => {
     ])
     .sort({ order: 1 });
 
-  // Create a new array with processed sections
   const processedSections = await Promise.all(
     sections.map(async (section) => {
       const sectionObj = section.toObject();
@@ -271,7 +254,6 @@ const getActiveSections = catchError(async (req, res, next) => {
       }
 
       if (section.type === "Categories") {
-        // Use our helper function to fetch full category data
         const categoryItems = await fetchFullCategories(section.items);
         return {
           ...sectionObj,
@@ -315,7 +297,6 @@ const getActiveSections = catchError(async (req, res, next) => {
         };
       }
 
-      // Default: return the section as is
       return sectionObj;
     })
   );

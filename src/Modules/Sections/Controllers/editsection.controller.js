@@ -14,6 +14,7 @@ export const editSection = catchError(async (req, res, next) => {
     order,
     items,
     type,
+    link,
   } = req.body;
 
   try {
@@ -62,6 +63,9 @@ export const editSection = catchError(async (req, res, next) => {
     if (description !== undefined) section.description = description;
     if (isActive !== undefined) section.isActive = isActive;
     if (type !== undefined) section.type = type;
+    if (link !== undefined) {
+      section.link = link;
+    }
 
     if ("items" in req.body) {
       if (Array.isArray(items)) {
@@ -79,8 +83,7 @@ export const editSection = catchError(async (req, res, next) => {
         section.items = [];
         console.log("Section items cleared - empty array set");
       }
-    }
-    else if (addItems && Array.isArray(addItems)) {
+    } else if (addItems && Array.isArray(addItems)) {
       const validItemsToAdd = addItems
         .filter((item) => mongoose.Types.ObjectId.isValid(item))
         .map((item) => new mongoose.Types.ObjectId(item)); // Added 'new' here
@@ -95,15 +98,19 @@ export const editSection = catchError(async (req, res, next) => {
     }
 
     // Save the updated section document
-    await section.save();
+    const updatedSection = await section.save();
+
+    // Reload the section to ensure all fields are returned
+    const refreshedSection = await Section.findById(id);
+
     console.log(
-      "Final section items after save:",
-      section.items.map((id) => id.toString())
+      "Final section after save:",
+      JSON.stringify(refreshedSection, null, 2)
     );
 
     return res.status(200).json({
       message: "Section updated successfully",
-      section,
+      section: refreshedSection,
     });
   } catch (error) {
     console.error("Error in editSection:", error);

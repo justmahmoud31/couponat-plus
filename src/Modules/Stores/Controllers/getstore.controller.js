@@ -31,24 +31,38 @@ export const getAllStores = catchError(async (req, res, next) => {
     .populate("rates");
 
   const storesWithCounts = await Promise.all(
-    stores.map(async (store) => {
-      const [categoriesCount, couponsCount, productsCount, ratesCount] =
-        await Promise.all([
-          Category.countDocuments({ _id: { $in: store.categories } }),
-          Coupon.countDocuments({ store_id: store._id }),
-          Product.countDocuments({ store_id: store._id }),
-          store.rates ? store.rates.length : 0,
-        ]);
+    stores
+      .filter((store) => store)
+      .map(async (store) => {
+        try {
+          const [categoriesCount, couponsCount, productsCount, ratesCount] =
+            await Promise.all([
+              Category.countDocuments({ _id: { $in: store.categories || [] } }),
+              Coupon.countDocuments({ store_id: store._id }),
+              Product.countDocuments({ store_id: store._id }),
+              store.rates ? store.rates.length : 0,
+            ]);
 
-      return {
-        ...store.toObject(),
-        categoriesCount,
-        couponsCount,
-        productsCount,
-        ratesCount,
-        totalCount: categoriesCount + couponsCount + productsCount,
-      };
-    })
+          return {
+            ...store.toObject(),
+            categoriesCount,
+            couponsCount,
+            productsCount,
+            ratesCount,
+            totalCount: categoriesCount + couponsCount + productsCount,
+          };
+        } catch (error) {
+          console.error("Error processing store data:", error);
+          return {
+            ...store.toObject(),
+            categoriesCount: 0,
+            couponsCount: 0,
+            productsCount: 0,
+            ratesCount: 0,
+            totalCount: 0,
+          };
+        }
+      })
   );
 
   res.status(200).json({
@@ -81,24 +95,38 @@ export const getAllActiveStores = catchError(async (req, res, next) => {
     .populate("rates");
 
   const storesWithCounts = await Promise.all(
-    stores.map(async (store) => {
-      const [categoriesCount, couponsCount, productsCount, ratesCount] =
-        await Promise.all([
-          Category.countDocuments({ _id: { $in: store.categories } }),
-          Coupon.countDocuments({ store_id: store._id }),
-          Product.countDocuments({ store_id: store._id }),
-          store.rates ? store.rates.length : 0,
-        ]);
+    stores
+      .filter((store) => store)
+      .map(async (store) => {
+        try {
+          const [categoriesCount, couponsCount, productsCount, ratesCount] =
+            await Promise.all([
+              Category.countDocuments({ _id: { $in: store.categories || [] } }),
+              Coupon.countDocuments({ store_id: store._id }),
+              Product.countDocuments({ store_id: store._id }),
+              store.rates ? store.rates.length : 0,
+            ]);
 
-      return {
-        ...store.toObject(),
-        categoriesCount,
-        couponsCount,
-        productsCount,
-        ratesCount,
-        totalCount: categoriesCount + couponsCount + productsCount,
-      };
-    })
+          return {
+            ...store.toObject(),
+            categoriesCount,
+            couponsCount,
+            productsCount,
+            ratesCount,
+            totalCount: categoriesCount + couponsCount + productsCount,
+          };
+        } catch (error) {
+          console.error("Error processing store data:", error);
+          return {
+            ...store.toObject(),
+            categoriesCount: 0,
+            couponsCount: 0,
+            productsCount: 0,
+            ratesCount: 0,
+            totalCount: 0,
+          };
+        }
+      })
   );
 
   res.status(200).json({
@@ -121,7 +149,7 @@ export const getOneStore = catchError(async (req, res, next) => {
 
   const [categoriesCount, couponsCount, productsCount, ratesCount] =
     await Promise.all([
-      Category.countDocuments({ _id: { $in: oneStore.categories } }),
+      Category.countDocuments({ _id: { $in: oneStore.categories || [] } }),
       Coupon.countDocuments({ store_id: id }),
       Product.countDocuments({ store_id: id }),
       oneStore.rates ? oneStore.rates.length : 0,
@@ -161,21 +189,34 @@ export const getStoresByCategory = catchError(async (req, res, next) => {
   }).populate("rates");
 
   const storesWithCounts = await Promise.all(
-    stores.map(async (store) => {
-      const [couponsCount, productsCount, ratesCount] = await Promise.all([
-        Coupon.countDocuments({ store_id: store._id }),
-        Product.countDocuments({ store_id: store._id }),
-        store.rates ? store.rates.length : 0,
-      ]);
+    stores
+      .filter((store) => store)
+      .map(async (store) => {
+        try {
+          const [couponsCount, productsCount, ratesCount] = await Promise.all([
+            Coupon.countDocuments({ store_id: store._id }),
+            Product.countDocuments({ store_id: store._id }),
+            store.rates ? store.rates.length : 0,
+          ]);
 
-      return {
-        ...store.toObject(),
-        couponsCount,
-        productsCount,
-        ratesCount,
-        totalCount: couponsCount + productsCount,
-      };
-    })
+          return {
+            ...store.toObject(),
+            couponsCount,
+            productsCount,
+            ratesCount,
+            totalCount: couponsCount + productsCount,
+          };
+        } catch (error) {
+          console.error("Error processing store data:", error);
+          return {
+            ...store.toObject(),
+            couponsCount: 0,
+            productsCount: 0,
+            ratesCount: 0,
+            totalCount: 0,
+          };
+        }
+      })
   );
 
   res.status(200).json({
