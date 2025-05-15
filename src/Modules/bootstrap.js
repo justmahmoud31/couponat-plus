@@ -14,6 +14,7 @@ import navigationRouter from "./Navigateion/navigation.routes.js";
 import wishlistRouter from "./Wishlist/wishlist.routes.js";
 import newsletterRouter from "./Newsletter/newsletter.routes.js";
 import sidebarRouter from "./Sidebar/sidebar.routes.js";
+import offerRouter from "./Offers/offers.routes.js";
 
 export const bootstrap = (app) => {
   app.use("/api/coupons", couponRouter);
@@ -32,4 +33,5 @@ export const bootstrap = (app) => {
   app.use("/api/wishlist", wishlistRouter);
   app.use("/api/newsletter", newsletterRouter);
   app.use("/api/sidebar", sidebarRouter);
+  app.use("/api/offers", offerRouter);
 };

@@ -5,6 +5,7 @@ import { Store } from "../../../../database/Models/Store.js";
 import { catchError } from "../../../Middlewares/catchError.js";
 import { Product } from "../../../../database/Models/Product.js";
 import { Event } from "../../../../database/Models/Events.js";
+import { Offer } from "../../../../database/Models/Offer.js";
 import mongoose from "mongoose";
 
 const fetchFullCategories = async (categoryIds) => {
@@ -155,6 +156,81 @@ const fetchEventsWithDetails = async (eventIds) => {
   }
 };
 
+const fetchOffersWithDetails = async (offerIds) => {
+  try {
+    console.log("Fetching offers with IDs:", offerIds);
+
+    // Convert string IDs to ObjectIds if needed
+    const validOfferIds = offerIds
+      .filter((id) => mongoose.Types.ObjectId.isValid(id))
+      .map((id) => new mongoose.Types.ObjectId(id));
+
+    console.log("Valid offer IDs:", validOfferIds);
+
+    const offers = await Offer.find({
+      _id: { $in: validOfferIds },
+      isActive: true,
+      isDeleted: false,
+    })
+      .populate({
+        path: "store_id",
+        select: "name logo numberOfCoupons",
+      })
+      .populate({
+        path: "category_id",
+        select: "name slug image",
+      });
+
+    console.log(`Found ${offers.length} active offers`);
+    if (offers.length > 0) {
+      console.log("First offer:", offers[0]._id);
+    }
+
+    const offersByCategory = {};
+    const allOffers = [];
+
+    for (const offer of offers) {
+      // Format the offer with required fields
+      const offerObj = {
+        ...offer.toObject(),
+        discount: offer.discountPercentage || 0, // Map discountPercentage to discount for frontend
+        cover_image: offer.image, // Map image to cover_image for frontend consistency
+        viewCount: offer.viewCount || 0, // Use actual viewCount or default to 0
+      };
+
+      allOffers.push(offerObj);
+
+      if (offer.category_id) {
+        const categoryId = offer.category_id._id.toString();
+        if (!offersByCategory[categoryId]) {
+          offersByCategory[categoryId] = {
+            _id: categoryId,
+            name: offer.category_id.name,
+            slug: offer.category_id.slug,
+            image: offer.category_id.image,
+            offers: [],
+          };
+        }
+        offersByCategory[categoryId].offers.push(offerObj);
+      }
+    }
+
+    const categories = Object.values(offersByCategory);
+
+    console.log(
+      `Processed ${allOffers.length} active offers and ${categories.length} categories`
+    );
+
+    return {
+      offers: allOffers,
+      categories: categories,
+    };
+  } catch (error) {
+    console.error("Error fetching offers with details:", error);
+    return { offers: [], categories: [] };
+  }
+};
+
 const getSection = catchError(async (req, res, next) => {
   const { type, isActive } = req.query;
   const filter = {};
@@ -217,6 +293,15 @@ const getSection = catchError(async (req, res, next) => {
         return {
           ...sectionObj,
           items: events,
+          categories: categories,
+        };
+      } else if (section.type === "Offers") {
+        const { offers, categories } = await fetchOffersWithDetails(
+          section.items
+        );
+        return {
+          ...sectionObj,
+          items: offers,
           categories: categories,
         };
       }
@@ -293,6 +378,15 @@ const getActiveSections = catchError(async (req, res, next) => {
         return {
           ...sectionObj,
           items: events,
+          categories: categories,
+        };
+      } else if (section.type === "Offers") {
+        const { offers, categories } = await fetchOffersWithDetails(
+          section.items
+        );
+        return {
+          ...sectionObj,
+          items: offers,
           categories: categories,
         };
       }

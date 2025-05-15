@@ -32,6 +32,7 @@ export const getStats = catchError(async (req, res, next) => {
     },
   });
 });
+
 export const search = catchError(async (req, res, next) => {
   const { type, query } = req.query;
 
@@ -40,51 +41,98 @@ export const search = catchError(async (req, res, next) => {
   }
 
   const regex = new RegExp(query, "i");
-  let results = [];
+  let results = {};
 
-  switch (type) {
-    case "users":
-      results = await User.find({
+  if (type === "all") {
+    // If type is "all", search across all collections
+    const [users, coupons, products, stores, categories] = await Promise.all([
+      User.find({
         $or: [{ username: regex }, { email: regex }],
-      }).select("-password -isVerified -otpExpiry -otp");
-      break;
-    case "coupons":
-      results = await Coupon.find({
+      }).select("-password -isVerified -otpExpiry -otp"),
+      Coupon.find({
         $or: [
           { code: regex },
           { description: regex },
           { title: regex },
           { link: regex },
         ],
-      });
-      break;
-    case "products":
-      results = await Product.find({
+      }).populate("store"),
+      Product.find({
         $or: [
           { title: regex },
           { description: regex },
           { code: regex },
           { brand_name: regex },
         ],
-      });
-      break;
-    case "stores":
-      results = await Store.find({
+      }),
+      Store.find({
         $or: [{ name: regex }, { description: regex }, { link: regex }],
-      });
-      break;
-    case "categories":
-      results = await Category.find({
+      }),
+      Category.find({
         name: regex,
-      });
-      break;
-    default:
-      return next(new AppError("Invalid type specified", 400));
+      }),
+    ]);
+
+    results = {
+      users,
+      coupons,
+      products,
+      stores,
+      categories,
+    };
+  } else {
+    // For specific type searches
+    let typeResults = [];
+
+    switch (type) {
+      case "users":
+        typeResults = await User.find({
+          $or: [{ username: regex }, { email: regex }],
+        }).select("-password -isVerified -otpExpiry -otp");
+        break;
+      case "coupons":
+        typeResults = await Coupon.find({
+          $or: [
+            { code: regex },
+            { description: regex },
+            { title: regex },
+            { link: regex },
+          ],
+        }).populate("store");
+        break;
+      case "products":
+        typeResults = await Product.find({
+          $or: [
+            { title: regex },
+            { description: regex },
+            { code: regex },
+            { brand_name: regex },
+          ],
+        });
+        break;
+      case "stores":
+        typeResults = await Store.find({
+          $or: [{ name: regex }, { description: regex }, { link: regex }],
+        });
+        break;
+      case "categories":
+        typeResults = await Category.find({
+          name: regex,
+        });
+        break;
+      default:
+        return next(new AppError("Invalid type specified", 400));
+    }
+
+    results = typeResults;
   }
 
   res.status(200).json({
     message: "Success",
-    totalResults: results.length,
+    totalResults:
+      type === "all"
+        ? Object.values(results).reduce((acc, curr) => acc + curr.length, 0)
+        : results.length,
     results,
   });
 });

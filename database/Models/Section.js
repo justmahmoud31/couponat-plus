@@ -25,6 +25,7 @@ const SectionSchema = new mongoose.Schema(
         "bestStoresCategories",
         "bestCouponCategories",
         "bestDealsCategory",
+        "Offers",
       ],
       required: true,
     },

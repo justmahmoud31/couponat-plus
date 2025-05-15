@@ -5,6 +5,7 @@ import { catchError } from "../../../Middlewares/catchError.js";
 import { AppError } from "../../../Utils/AppError.js";
 import { Product } from "../../../../database/Models/Product.js";
 import { Coupon } from "../../../../database/Models/Coupon.js";
+import slugify from "../../../Utils/slugify.js";
 
 export const getAllStores = catchError(async (req, res, next) => {
   let { isDeleted, page = 1, limit = 10, sort = { createdAt: -1 } } = req.query;
@@ -92,6 +93,9 @@ export const getAllActiveStores = catchError(async (req, res, next) => {
     .sort(sort)
     .skip(skip)
     .limit(parseInt(limit))
+    .select(
+      "name slug description link logo categories isDeleted createdAt updatedAt"
+    )
     .populate("rates");
 
   const storesWithCounts = await Promise.all(
@@ -107,8 +111,10 @@ export const getAllActiveStores = catchError(async (req, res, next) => {
               store.rates ? store.rates.length : 0,
             ]);
 
+          const storeObject = store.toObject();
+
           return {
-            ...store.toObject(),
+            ...storeObject,
             categoriesCount,
             couponsCount,
             productsCount,
@@ -223,5 +229,62 @@ export const getStoresByCategory = catchError(async (req, res, next) => {
     message: "Success",
     count: storesWithCounts.length,
     stores: storesWithCounts,
+  });
+});
+
+export const getStoreBySlug = catchError(async (req, res, next) => {
+  const { slug } = req.params;
+
+  let store = await Store.findOne({ slug });
+
+  if (!store) {
+    store = await Store.findOne({
+      name: { $regex: new RegExp(`^${slug.replace(/-/g, " ")}$`, "i") },
+    });
+  }
+
+  if (!store && mongoose.Types.ObjectId.isValid(slug)) {
+    store = await Store.findById(slug);
+  }
+
+  if (!store) {
+    return next(new AppError("Store Not Found", 404));
+  }
+
+  if (store && !store.slug) {
+    store.slug = slugify(store.name);
+    await store.save();
+    console.log(
+      `Generated and saved slug for store "${store.name}": ${store.slug}`
+    );
+  }
+
+  const [categoriesCount, couponsCount, productsCount, ratesCount] =
+    await Promise.all([
+      Category.countDocuments({ _id: { $in: store.categories || [] } }),
+      Coupon.countDocuments({ store_id: store._id }),
+      Product.countDocuments({ store_id: store._id }),
+      store.rates ? store.rates.length : 0,
+    ]);
+
+  const populatedStore = await Store.findById(store._id).populate([
+    { path: "categories" },
+    { path: "coupons" },
+    { path: "rates" },
+    { path: "products" },
+  ]);
+
+  const storeWithCounts = {
+    ...populatedStore.toObject(),
+    categoriesCount,
+    couponsCount,
+    productsCount,
+    ratesCount,
+    totalCount: categoriesCount + couponsCount + productsCount,
+  };
+
+  res.status(200).json({
+    message: "Success",
+    oneStore: storeWithCounts,
   });
 });

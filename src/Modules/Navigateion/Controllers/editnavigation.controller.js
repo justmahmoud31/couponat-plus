@@ -1,9 +1,10 @@
 import { Navigation } from "../../../../database/Models/Navigation.js";
+import { Category } from "../../../../database/Models/Category.js";
 
 export const editNavigation = async (req, res) => {
   try {
     const { id } = req.params;
-    const { label, sort_order, isActive, category } = req.body;
+    const { label, sort_order, isActive, category, type } = req.body;
 
     const navigation = await Navigation.findById(id);
     if (!navigation) {
@@ -13,7 +14,18 @@ export const editNavigation = async (req, res) => {
     if (label !== undefined) navigation.label = label;
     if (sort_order !== undefined) navigation.sort_order = sort_order;
     if (isActive !== undefined) navigation.isActive = isActive;
-    if (category !== undefined) navigation.category = category;
+    if (type !== undefined) navigation.type = type;
+
+    // Only update category if type is 'category'
+    if (type === "category" && category !== undefined) {
+      // Verify category exists
+      const categoryExists = await Category.findById(category);
+      if (!categoryExists)
+        return res.status(404).json({ error: "Category not found" });
+
+      navigation.category = category;
+    }
+
     await navigation.save();
 
     res

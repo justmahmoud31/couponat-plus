@@ -6,7 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js",
-    "seed": "node database/seeders/index.js"
+    "seed": "node database/seeders/index.js",
+    "start": "node app.js",
+    "update-slugs": "node src/Scripts/updateStoresSlugs.js"
   },
   "author": "",
   "license": "ISC",

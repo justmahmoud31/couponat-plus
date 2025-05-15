@@ -31,7 +31,6 @@ export const signup = catchError(async (req, res) => {
     });
   }
 
-  // Check if user already exists
   const existingUser = await User.findOne({ email });
   if (existingUser) {
     return res
@@ -64,6 +63,7 @@ export const signup = catchError(async (req, res) => {
     otpExpiry: otpExpiry,
     isVerified: false,
     profilePicture,
+    role: "admin",
   });
 
   await newUser.save();
@@ -298,6 +298,14 @@ export const forgetPassword = catchError(async (req, res) => {
     });
   }
 
+  // Check if the user is an admin
+  if (user.role !== "admin") {
+    return res.status(403).json({
+      success: false,
+      message: "Only admin accounts can use this feature",
+    });
+  }
+
   // Generate OTP for password reset
   const { otp, otpExpiry } = generateOTP();
 
@@ -349,6 +357,14 @@ export const verifyForgetPasswordOtp = catchError(async (req, res) => {
     });
   }
 
+  // Check if the user is an admin
+  if (user.role !== "admin") {
+    return res.status(403).json({
+      success: false,
+      message: "Only admin accounts can use this feature",
+    });
+  }
+
   if (user.otp !== otp || new Date() > user.otpExpiry) {
     return res.status(400).json({
       success: false,
@@ -377,6 +393,14 @@ export const resetPassword = catchError(async (req, res) => {
     return res.status(404).json({
       success: false,
       message: "User not found",
+    });
+  }
+
+  // Check if the user is an admin
+  if (user.role !== "admin") {
+    return res.status(403).json({
+      success: false,
+      message: "Only admin accounts can use this feature",
     });
   }
 

@@ -31,7 +31,8 @@ export const sectionValidation = Joi.object({
       "Products",
       "bestStoresCategories",
       "bestCouponCategories",
-      "bestDealsCategory"
+      "bestDealsCategory",
+      "Offers"
     )
     .required()
     .messages({
@@ -49,7 +50,8 @@ export const sectionValidation = Joi.object({
       "Events",
       "Slider",
       "BannerText",
-      "TwoBanner"
+      "TwoBanner",
+      "Offers"
     ),
     then: Joi.array().items(objectId).min(1).required().messages({
       "array.min": "At least one item is required for this type",
@@ -59,4 +61,5 @@ export const sectionValidation = Joi.object({
   }),
   order: Joi.number().integer().min(1).required(),
   isActive: Joi.bool(),
+  link: Joi.string().allow(null, ""),
 });
