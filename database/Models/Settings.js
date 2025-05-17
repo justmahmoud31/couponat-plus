@@ -17,6 +17,12 @@ const SettingsSchema = new mongoose.Schema(
     },
     copyright: { type: String },
     marketingBanners: [{ type: String }],
+    featuredStores: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Store",
+      },
+    ],
     pages: {
       privacyPolicy: {
         type: String,

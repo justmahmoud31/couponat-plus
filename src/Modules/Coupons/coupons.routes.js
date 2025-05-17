@@ -3,6 +3,7 @@ import { addCoupon } from "./Controllers/AddCopoun.controller.js";
 import { mixedFiles, singleFile } from "../../Config/multerConfig.js";
 import {
   getAllCopouns,
+  getCouponBySlug,
   getOneCopoun,
 } from "./Controllers/getCopouns.controller.js";
 import {
@@ -68,5 +69,6 @@ router.get("/most-used", getMostUsedCoupons);
 router.get("/new", getNewCoupons);
 router.get("/expiring-soon", getExpiringSoonCoupons);
 router.post("/track-usage/:id", trackCouponUsage);
+router.get("/bySlug/:slug", getCouponBySlug);
 
 export default router;

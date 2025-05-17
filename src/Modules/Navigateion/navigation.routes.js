@@ -1,16 +1,32 @@
 import express from "express";
-import { getAllNavigations, getNavigationById } from "./Controllers/getnavigation.controller.js";
+import {
+  getAllNavigations,
+  getNavigationById,
+  getNavigationTree,
+} from "./Controllers/getnavigation.controller.js";
 import { createNavigation } from "./Controllers/addnavigation.controller.js";
 import { editNavigation } from "./Controllers/editnavigation.controller.js";
 import { deleteNavigation } from "./Controllers/deletenavigation.controller.js";
-
+import {
+  isAuthenticated,
+  authorizeRoles,
+} from "../../Middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-router.post("/", createNavigation);
+// Public routes
 router.get("/", getAllNavigations);
+router.get("/tree", getNavigationTree);
 router.get("/:id", getNavigationById);
-router.patch("/:id", editNavigation);
-router.delete("/:id", deleteNavigation);
+
+// Protected routes - admin only
+router.post("/", isAuthenticated, authorizeRoles("admin"), createNavigation);
+router.patch("/:id", isAuthenticated, authorizeRoles("admin"), editNavigation);
+router.delete(
+  "/:id",
+  isAuthenticated,
+  authorizeRoles("admin"),
+  deleteNavigation
+);
 
 export default router;

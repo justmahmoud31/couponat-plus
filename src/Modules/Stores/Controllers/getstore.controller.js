@@ -163,7 +163,10 @@ export const getOneStore = catchError(async (req, res, next) => {
 
   const populatedStore = await Store.findById(id).populate([
     { path: "categories" },
-    { path: "coupons" },
+    {
+      path: "coupons",
+      match: { store_id: id },
+    },
     { path: "rates" },
     { path: "products" },
   ]);
@@ -269,7 +272,10 @@ export const getStoreBySlug = catchError(async (req, res, next) => {
 
   const populatedStore = await Store.findById(store._id).populate([
     { path: "categories" },
-    { path: "coupons" },
+    {
+      path: "coupons",
+      match: { store_id: store._id },
+    },
     { path: "rates" },
     { path: "products" },
   ]);

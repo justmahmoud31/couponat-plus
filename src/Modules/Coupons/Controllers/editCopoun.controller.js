@@ -6,39 +6,77 @@ import { catchError } from "../../../Middlewares/catchError.js";
 import mongoose from "mongoose";
 
 export const updateCoupon = catchError(async (req, res, next) => {
-    const { id } = req.params;
-    let updateData = req.body;
+  const { id } = req.params;
+  let updateData = req.body;
 
-    // Find the coupon by ID
-    const coupon = await Coupon.findById(id);
-    if (!coupon) {
-        return res.status(404).json({ message: "Coupon not found" });
+  const coupon = await Coupon.findById(id);
+  if (!coupon) {
+    return res.status(404).json({ message: "Coupon not found" });
+  }
+
+  if (req.file) {
+    if (coupon.image) {
+      const oldImagePath = path.join(process.cwd(), coupon.image);
+      if (fs.existsSync(oldImagePath)) {
+        await fs.unlink(oldImagePath);
+      }
     }
+    updateData.image = `uploads/coupons/${req.file.filename}`;
+  }
+  if (updateData.category_id) {
+    let categories;
 
-    // Handle Image Replacement
-    if (req.file) {
-        // Delete old image if it exists
-        if (coupon.image) {
-            const oldImagePath = path.join(process.cwd(), coupon.image);
-            if (fs.existsSync(oldImagePath)) {
-                await fs.unlink(oldImagePath);
-            }
+    if (Array.isArray(updateData.category_id)) {
+      categories = updateData.category_id;
+    } else if (typeof updateData.category_id === "string") {
+      // Try to parse as JSON string first (new format)
+      try {
+        const parsed = JSON.parse(updateData.category_id);
+        if (Array.isArray(parsed)) {
+          categories = parsed;
+          console.log("Successfully parsed category_id JSON:", categories);
+        } else {
+          // Fallback to old format
+          categories = [updateData.category_id];
         }
-        updateData.image = `uploads/coupons/${req.file.filename}`; // Save new image filename
-    }
-    // Validate updated data using Joi (before ObjectId conversion)
-    const { error } = validateCoupon(updateData);
-    if (error) {
-        return res.status(400).json({ success: false, errors: error.details.map(err => err.message) });
+      } catch (err) {
+        // Not JSON, check if it's comma-separated
+        if (updateData.category_id.includes(",")) {
+          categories = updateData.category_id.split(",");
+        } else {
+          // Single ID
+          categories = [updateData.category_id];
+        }
+      }
+    } else {
+      categories = [];
     }
 
-    // Convert category_id to ObjectId if it's provided and not an empty string
-    if (updateData.category_id && mongoose.Types.ObjectId.isValid(updateData.category_id)) {
-        updateData.category_id = new mongoose.Types.ObjectId(updateData.category_id);
-    }
+    console.log("Category IDs before processing:", categories);
 
-    // Update the coupon
-    const updatedCoupon = await Coupon.findByIdAndUpdate(id, updateData, { new: true });
+    // Convert each category ID to ObjectId if valid
+    updateData.category_id = categories
+      .filter((catId) => mongoose.Types.ObjectId.isValid(catId))
+      .map((catId) => new mongoose.Types.ObjectId(catId));
 
-    res.status(200).json({ message: "Coupon updated successfully", coupon: updatedCoupon });
+    console.log("Category IDs after processing:", updateData.category_id);
+  }
+
+  // Validate updated data using Joi (before ObjectId conversion)
+  const { error } = validateCoupon(updateData);
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      errors: error.details.map((err) => err.message),
+    });
+  }
+
+  // Update the coupon
+  const updatedCoupon = await Coupon.findByIdAndUpdate(id, updateData, {
+    new: true,
+  });
+
+  res
+    .status(200)
+    .json({ message: "Coupon updated successfully", coupon: updatedCoupon });
 });

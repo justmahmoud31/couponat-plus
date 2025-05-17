@@ -16,8 +16,15 @@ export const initializeSettings = async () => {
 
 export const updateSettings = async (req, res) => {
   try {
-    const { name, description, emails, socialMedia, copyright, pages } =
-      req.body;
+    const {
+      name,
+      description,
+      emails,
+      socialMedia,
+      copyright,
+      pages,
+      featuredStores,
+    } = req.body;
 
     let existingSettings = await Settings.findOne();
 
@@ -33,6 +40,7 @@ export const updateSettings = async (req, res) => {
         marketingBanners: req.files?.marketingBanners
           ? req.files.marketingBanners.map((file) => file.path)
           : [],
+        featuredStores: featuredStores ? JSON.parse(featuredStores) : [],
         pages: pages
           ? JSON.parse(pages)
           : {
@@ -76,6 +84,11 @@ export const updateSettings = async (req, res) => {
     if (socialMedia) existingSettings.socialMedia = JSON.parse(socialMedia);
     if (copyright) existingSettings.copyright = copyright;
 
+    // Update featured stores if provided
+    if (featuredStores) {
+      existingSettings.featuredStores = JSON.parse(featuredStores);
+    }
+
     // Update pages content
     if (pages) {
       const parsedPages = JSON.parse(pages);
@@ -91,6 +104,7 @@ export const updateSettings = async (req, res) => {
       settings: existingSettings,
     });
   } catch (error) {
+    console.error("Error in updateSettings:", error);
     res
       .status(500)
       .json({ message: "Error updating settings", error: error.message });

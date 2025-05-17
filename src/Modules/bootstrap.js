@@ -13,7 +13,7 @@ import marketingRouter from "./Marketing/marketing.routes.js";
 import navigationRouter from "./Navigateion/navigation.routes.js";
 import wishlistRouter from "./Wishlist/wishlist.routes.js";
 import newsletterRouter from "./Newsletter/newsletter.routes.js";
-import sidebarRouter from "./Sidebar/sidebar.routes.js";
+import sidebarAdRouter from "./SidebarAd/sidebarAd.routes.js";
 import offerRouter from "./Offers/offers.routes.js";
 
 export const bootstrap = (app) => {
@@ -32,6 +32,6 @@ export const bootstrap = (app) => {
   app.use("/api/nav", navigationRouter);
   app.use("/api/wishlist", wishlistRouter);
   app.use("/api/newsletter", newsletterRouter);
-  app.use("/api/sidebar", sidebarRouter);
+  app.use("/api/sidebar-ads", sidebarAdRouter);
   app.use("/api/offers", offerRouter);
 };

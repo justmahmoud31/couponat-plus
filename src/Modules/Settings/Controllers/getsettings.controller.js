@@ -2,7 +2,10 @@ import { Settings } from "../../../../database/Models/Settings.js";
 import { catchError } from "../../../Middlewares/catchError.js";
 
 export const getSettings = catchError(async (req, res, next) => {
-  let existingSettings = await Settings.findOne();
+  let existingSettings = await Settings.findOne().populate({
+    path: "featuredStores",
+    select: "name logo slug _id",
+  });
 
   if (!existingSettings) {
     const newSettingsData = {
@@ -16,6 +19,7 @@ export const getSettings = catchError(async (req, res, next) => {
       marketingBanners: req.files?.marketingBanners
         ? req.files.marketingBanners.map((file) => file.path)
         : [],
+      featuredStores: [],
       sections: [
         { title: "Default Section", content: "This is a default section." },
       ],
@@ -32,20 +36,23 @@ export const getSettings = catchError(async (req, res, next) => {
       .json({ message: "Settings created successfully", data: newSettings });
   }
 
-  // Ensure sections field is present even if missing in existing data
   if (!existingSettings.sections || !existingSettings.sections.length) {
     existingSettings.sections = [
       { title: "Default Section", content: "This is a default section." },
     ];
   }
 
-  // Ensure pages field is present even if missing in existing data
   if (!existingSettings.pages) {
     existingSettings.pages = {
       privacyPolicy:
         "<h1>سياسة الخصوصية</h1><p>محتوى سياسة الخصوصية يظهر هنا.</p>",
       terms: "<h1>الشروط والأحكام</h1><p>محتوى الشروط والأحكام يظهر هنا.</p>",
     };
+    await existingSettings.save();
+  }
+
+  if (!existingSettings.featuredStores) {
+    existingSettings.featuredStores = [];
     await existingSettings.save();
   }
 

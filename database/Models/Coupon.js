@@ -1,14 +1,22 @@
 import mongoose from "mongoose";
+import slugify from "../../src/Utils/slugify.js";
 
 const CouponSchema = mongoose.Schema(
   {
     title: { type: String, required: true, trim: true },
     code: { type: String, required: false, trim: true },
+    slug: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      unique: true,
+      sparse: true,
+    },
     description: { type: String, required: false, trim: true },
     image: { type: String, default: null },
     cover_image: { type: String, default: null },
     link: { type: String, required: false, trim: true },
-    category_id: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
+    category_id: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],
     store_id: { type: mongoose.Schema.Types.ObjectId, ref: "Store" },
     discount: { type: Number, default: 0 },
     discountType: {
@@ -35,4 +43,10 @@ const CouponSchema = mongoose.Schema(
   { timestamps: true }
 );
 
+CouponSchema.pre("save", function (next) {
+  if (!this.slug) {
+    this.slug = slugify(this.title);
+  }
+  next();
+});
 export const Coupon = mongoose.model("Coupon", CouponSchema);

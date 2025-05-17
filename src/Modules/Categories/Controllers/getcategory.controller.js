@@ -42,11 +42,11 @@ export const getAllCategories = catchError(async (req, res, next) => {
 
   // Batch count coupons for all categories in one query
   const couponCounts = await Coupon.aggregate([
+    { $unwind: { path: "$category_id", preserveNullAndEmptyArrays: true } },
     { $match: { category_id: { $in: categoryIds } } },
     { $group: { _id: "$category_id", count: { $sum: 1 } } },
   ]);
 
-  // Create lookup maps for quick access
   const productCountMap = new Map(
     productCounts.map((item) => [item._id.toString(), item.count])
   );
@@ -119,6 +119,8 @@ export const getAllActiveCategories = catchError(async (req, res, next) => {
 
   // Batch count coupons for all categories in one query
   const couponCounts = await Coupon.aggregate([
+    // Use $in operator for array fields - a coupon can be in multiple categories
+    { $unwind: { path: "$category_id", preserveNullAndEmptyArrays: true } },
     { $match: { category_id: { $in: categoryIds } } },
     { $group: { _id: "$category_id", count: { $sum: 1 } } },
   ]);
@@ -191,7 +193,8 @@ export const getOneCategory = catchError(async (req, res, next) => {
   // Get counts in parallel for better performance
   const [productsCount, couponsCount, storesCount] = await Promise.all([
     Product.countDocuments({ category_id: categoryId }),
-    Coupon.countDocuments({ category_id: categoryId }),
+    // For coupons, we need to check if the categoryId is in the array
+    Coupon.countDocuments({ category_id: { $in: [categoryId] } }),
     Store.countDocuments({ categories: categoryId }),
   ]);
 
@@ -241,7 +244,8 @@ export const getCategoryBySlug = catchError(async (req, res, next) => {
   // Get counts in parallel for better performance
   const [productsCount, couponsCount, storesCount] = await Promise.all([
     Product.countDocuments({ category_id: categoryId }),
-    Coupon.countDocuments({ category_id: categoryId }),
+    // For coupons, we need to check if the categoryId is in the array
+    Coupon.countDocuments({ category_id: { $in: [categoryId] } }),
     Store.countDocuments({ categories: categoryId }),
   ]);
 
@@ -272,7 +276,8 @@ export const getByBestCategory = catchError(async (req, res, next) => {
   // Get counts in parallel for better performance
   const [productsCount, couponsCount, storesCount] = await Promise.all([
     Product.countDocuments({ category_id: categoryId }),
-    Coupon.countDocuments({ category_id: categoryId }),
+    // For coupons, we need to check if the categoryId is in the array
+    Coupon.countDocuments({ category_id: { $in: [categoryId] } }),
     Store.countDocuments({ categories: categoryId }),
   ]);
 
