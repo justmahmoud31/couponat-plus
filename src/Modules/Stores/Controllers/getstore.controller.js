@@ -153,19 +153,30 @@ export const getOneStore = catchError(async (req, res, next) => {
     return next(new AppError("Store Not Found", 404));
   }
 
-  const [categoriesCount, couponsCount, productsCount, ratesCount] =
-    await Promise.all([
-      Category.countDocuments({ _id: { $in: oneStore.categories || [] } }),
-      Coupon.countDocuments({ store_id: id }),
-      Product.countDocuments({ store_id: id }),
-      oneStore.rates ? oneStore.rates.length : 0,
-    ]);
+  const [
+    categoriesCount,
+    storeReferencedCouponsCount,
+    productsCount,
+    ratesCount,
+  ] = await Promise.all([
+    Category.countDocuments({ _id: { $in: oneStore.categories || [] } }),
+    Coupon.countDocuments({ store_id: id }),
+    Product.countDocuments({ store_id: id }),
+    oneStore.rates ? oneStore.rates.length : 0,
+  ]);
+
+  const storeCouponsCount = oneStore.coupons ? oneStore.coupons.length : 0;
+
+  const totalCouponsCount = Math.max(
+    storeReferencedCouponsCount,
+    storeCouponsCount
+  );
 
   const populatedStore = await Store.findById(id).populate([
     { path: "categories" },
     {
       path: "coupons",
-      match: { store_id: id },
+      model: "Coupon",
     },
     { path: "rates" },
     { path: "products" },
@@ -174,10 +185,11 @@ export const getOneStore = catchError(async (req, res, next) => {
   const storeWithCounts = {
     ...populatedStore.toObject(),
     categoriesCount,
-    couponsCount,
+    couponsCount: totalCouponsCount,
     productsCount,
     ratesCount,
-    totalCount: categoriesCount + couponsCount + productsCount,
+    numberOfCoupons: storeCouponsCount,
+    totalCount: categoriesCount + totalCouponsCount + productsCount,
   };
 
   res.status(200).json({
@@ -262,19 +274,30 @@ export const getStoreBySlug = catchError(async (req, res, next) => {
     );
   }
 
-  const [categoriesCount, couponsCount, productsCount, ratesCount] =
-    await Promise.all([
-      Category.countDocuments({ _id: { $in: store.categories || [] } }),
-      Coupon.countDocuments({ store_id: store._id }),
-      Product.countDocuments({ store_id: store._id }),
-      store.rates ? store.rates.length : 0,
-    ]);
+  const [
+    categoriesCount,
+    storeReferencedCouponsCount,
+    productsCount,
+    ratesCount,
+  ] = await Promise.all([
+    Category.countDocuments({ _id: { $in: store.categories || [] } }),
+    Coupon.countDocuments({ store_id: store._id }),
+    Product.countDocuments({ store_id: store._id }),
+    store.rates ? store.rates.length : 0,
+  ]);
+
+  const storeCouponsCount = store.coupons ? store.coupons.length : 0;
+
+  const totalCouponsCount = Math.max(
+    storeReferencedCouponsCount,
+    storeCouponsCount
+  );
 
   const populatedStore = await Store.findById(store._id).populate([
     { path: "categories" },
     {
       path: "coupons",
-      match: { store_id: store._id },
+      model: "Coupon",
     },
     { path: "rates" },
     { path: "products" },
@@ -283,10 +306,11 @@ export const getStoreBySlug = catchError(async (req, res, next) => {
   const storeWithCounts = {
     ...populatedStore.toObject(),
     categoriesCount,
-    couponsCount,
+    couponsCount: totalCouponsCount,
     productsCount,
     ratesCount,
-    totalCount: categoriesCount + couponsCount + productsCount,
+    numberOfCoupons: storeCouponsCount,
+    totalCount: categoriesCount + totalCouponsCount + productsCount,
   };
 
   res.status(200).json({

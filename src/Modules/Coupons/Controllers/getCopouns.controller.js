@@ -151,4 +151,5 @@ const getCouponBySlug = catchError(async (req, res, next) => {
     coupon,
   });
 });
+
 export { getAllCopouns, getOneCopoun, getCouponBySlug };

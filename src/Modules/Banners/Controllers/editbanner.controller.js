@@ -10,7 +10,18 @@ export const editBanner = async (req, res) => {
       deletedImages: rawDeletedImages,
       isActive,
       description,
+      link,
     } = req.body;
+
+    let imageLinks = [];
+    if (req.body.imageLinks) {
+      try {
+        imageLinks = JSON.parse(req.body.imageLinks);
+      } catch (err) {
+        console.error("Error parsing imageLinks:", err);
+      }
+    }
+
     const newImages = req.files?.images?.map((file) => file.path) || [];
     const banner = await Banner.findById(id);
 
@@ -31,26 +42,54 @@ export const editBanner = async (req, res) => {
           : [rawDeletedImages];
       }
 
-
       banner.images = banner.images.filter((image) => {
-        if (imagesToDelete.includes(image)) {
-          fs.unlink(image, (err) => {
-            if (err) console.error(`Error deleting old image: ${image}`, err);
-            else console.log(`Successfully deleted image: ${image}`);
+        const imagePath = typeof image === "object" ? image.path : image;
+
+        if (imagesToDelete.includes(imagePath)) {
+          fs.unlink(imagePath, (err) => {
+            if (err)
+              console.error(`Error deleting old image: ${imagePath}`, err);
+            else console.log(`Successfully deleted image: ${imagePath}`);
           });
           return false;
         }
-        return true; // Keep in array
+        return true;
       });
     }
 
-    // Update banner properties
     banner.title = title || banner.title;
     banner.type = type || banner.type;
     if (description !== undefined) {
       banner.description = description;
     }
-    banner.images = [...banner.images, ...newImages];
+    if (link !== undefined) {
+      banner.link = link;
+    }
+
+    const existingImages = banner.images.map((image, index) => {
+      if (typeof image === "string") {
+        if (imageLinks[index]) {
+          return { path: image, link: imageLinks[index] };
+        }
+        return image;
+      } else if (typeof image === "object" && image.path) {
+        if (imageLinks[index]) {
+          return { ...image, link: imageLinks[index] };
+        }
+        return image;
+      }
+      return image;
+    });
+
+    const processedNewImages = newImages.map((path, index) => {
+      const linkIndex = existingImages.length + index;
+      if (imageLinks[linkIndex]) {
+        return { path, link: imageLinks[linkIndex] };
+      }
+      return path;
+    });
+
+    banner.images = [...existingImages, ...processedNewImages];
     banner.isActive = isActive !== undefined ? isActive : banner.isActive;
 
     await banner.save();
