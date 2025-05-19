@@ -55,6 +55,16 @@ const getAllCopouns = catchError(async (req, res, next) => {
           : [];
       }
 
+      if (plainCoupon.category_id && plainCoupon.category_id.length > 0) {
+        const categories = await mongoose
+          .model("Category")
+          .find({ _id: { $in: plainCoupon.category_id } })
+          .select("name slug image");
+        plainCoupon.categories = categories;
+      } else {
+        plainCoupon.categories = [];
+      }
+
       if (plainCoupon.store_id) {
         const store = await mongoose
           .model("Store")
@@ -86,15 +96,27 @@ const getOneCopoun = catchError(async (req, res, next) => {
     return next(new AppError("Coupon not found or Invalid Id", 400));
   }
 
-  // Convert to plain object for manipulation
   coupon = coupon.toObject();
 
-  // Ensure category_id is always an array
   if (!Array.isArray(coupon.category_id)) {
     coupon.category_id = coupon.category_id ? [coupon.category_id] : [];
   }
 
-  // Populate store if exists
+  if (coupon.category_id && coupon.category_id.length > 0) {
+    try {
+      const categories = await mongoose
+        .model("Category")
+        .find({ _id: { $in: coupon.category_id } })
+        .select("name slug image");
+      coupon.categories = categories;
+    } catch (error) {
+      console.log("Error populating categories:", error);
+      coupon.categories = [];
+    }
+  } else {
+    coupon.categories = [];
+  }
+
   if (coupon.store_id) {
     try {
       const store = await mongoose.model("Store").findById(coupon.store_id);
@@ -124,15 +146,46 @@ const getOneCopoun = catchError(async (req, res, next) => {
     relatedQuery.$or.length > 0 ? await Coupon.find(relatedQuery) : [];
 
   // Process related coupons to ensure category_id is an array
-  coupon.relatedCoupons = relatedCoupons.map((relCoupon) => {
-    const plainRelCoupon = relCoupon.toObject();
-    if (!Array.isArray(plainRelCoupon.category_id)) {
-      plainRelCoupon.category_id = plainRelCoupon.category_id
-        ? [plainRelCoupon.category_id]
-        : [];
-    }
-    return plainRelCoupon;
-  });
+  coupon.relatedCoupons = await Promise.all(
+    relatedCoupons.map(async (relCoupon) => {
+      const plainRelCoupon = relCoupon.toObject();
+
+      if (!Array.isArray(plainRelCoupon.category_id)) {
+        plainRelCoupon.category_id = plainRelCoupon.category_id
+          ? [plainRelCoupon.category_id]
+          : [];
+      }
+
+      // Populate categories for related coupons
+      if (plainRelCoupon.category_id && plainRelCoupon.category_id.length > 0) {
+        try {
+          const categories = await mongoose
+            .model("Category")
+            .find({ _id: { $in: plainRelCoupon.category_id } })
+            .select("name slug image");
+          plainRelCoupon.categories = categories;
+        } catch (error) {
+          console.log("Error populating categories for related coupon:", error);
+          plainRelCoupon.categories = [];
+        }
+      } else {
+        plainRelCoupon.categories = [];
+      }
+
+      if (plainRelCoupon.store_id) {
+        try {
+          const store = await mongoose
+            .model("Store")
+            .findById(plainRelCoupon.store_id);
+          plainRelCoupon.store_id = store;
+        } catch (error) {
+          console.log("Error populating store for related coupon:", error);
+        }
+      }
+
+      return plainRelCoupon;
+    })
+  );
 
   res.status(200).json({
     message: "Coupon found successfully",
@@ -142,10 +195,42 @@ const getOneCopoun = catchError(async (req, res, next) => {
 
 const getCouponBySlug = catchError(async (req, res, next) => {
   const { slug } = req.params;
-  const coupon = await Coupon.findOne({ slug });
-  if (!coupon) {
+  const couponDoc = await Coupon.findOne({ slug });
+  if (!couponDoc) {
     return next(new AppError("Coupon not found or Invalid Id", 400));
   }
+
+  const coupon = couponDoc.toObject();
+
+  if (!Array.isArray(coupon.category_id)) {
+    coupon.category_id = coupon.category_id ? [coupon.category_id] : [];
+  }
+
+  if (coupon.category_id && coupon.category_id.length > 0) {
+    try {
+      const categories = await mongoose
+        .model("Category")
+        .find({ _id: { $in: coupon.category_id } })
+        .select("name slug image");
+      coupon.categories = categories;
+    } catch (error) {
+      console.log("Error populating categories:", error);
+      coupon.categories = [];
+    }
+  } else {
+    coupon.categories = [];
+  }
+
+  // Populate store if exists
+  if (coupon.store_id) {
+    try {
+      const store = await mongoose.model("Store").findById(coupon.store_id);
+      coupon.store_id = store;
+    } catch (error) {
+      console.log("Error populating store:", error);
+    }
+  }
+
   res.status(200).json({
     message: "Coupon found successfully",
     coupon,
