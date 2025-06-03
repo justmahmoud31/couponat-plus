@@ -38,7 +38,7 @@ router.post(
 );
 router.get("/", getAllCopouns);
 router.get("/onecopoun/:id", getOneCopoun);
-router.get("/onecopoun/:slug", getCouponBySlug);
+router.get("/by-slug/:slug", getCouponBySlug);
 router.delete(
   "/deletecopoun",
   isAuthenticated,
