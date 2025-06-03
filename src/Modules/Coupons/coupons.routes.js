@@ -38,6 +38,7 @@ router.post(
 );
 router.get("/", getAllCopouns);
 router.get("/onecopoun/:id", getOneCopoun);
+router.get("/onecopoun/:slug", getCouponBySlug);
 router.delete(
   "/deletecopoun",
   isAuthenticated,
@@ -64,11 +65,9 @@ router.patch(
   updateCoupon
 );
 
-// New statistics and tracking routes
 router.get("/most-used", getMostUsedCoupons);
 router.get("/new", getNewCoupons);
 router.get("/expiring-soon", getExpiringSoonCoupons);
 router.post("/track-usage/:id", trackCouponUsage);
-router.get("/bySlug/:slug", getCouponBySlug);
 
 export default router;

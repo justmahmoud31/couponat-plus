@@ -8,7 +8,13 @@ import { Coupon } from "../../../../database/Models/Coupon.js";
 import slugify from "../../../Utils/slugify.js";
 
 export const getAllStores = catchError(async (req, res, next) => {
-  let { isDeleted, page = 1, limit = 10, sort = { createdAt: -1 } } = req.query;
+  let {
+    isDeleted,
+    page = 1,
+    limit = 10,
+    sort = { createdAt: -1 },
+    all,
+  } = req.query;
 
   let filter = {};
   if (isDeleted === "true") {
@@ -21,15 +27,21 @@ export const getAllStores = catchError(async (req, res, next) => {
   } else if (sort === "desc") {
     sort = { createdAt: 1 };
   }
-  const skip = (parseInt(page) - 1) * parseInt(limit);
 
   const totalStores = await Store.countDocuments(filter);
 
-  const stores = await Store.find(filter)
-    .sort(sort)
-    .skip(skip)
-    .limit(parseInt(limit))
-    .populate("rates");
+  let stores;
+
+  if (all === "true" || limit === "all") {
+    stores = await Store.find(filter).sort(sort).populate("rates");
+  } else {
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    stores = await Store.find(filter)
+      .sort(sort)
+      .skip(skip)
+      .limit(parseInt(limit))
+      .populate("rates");
+  }
 
   const storesWithCounts = await Promise.all(
     stores
@@ -69,8 +81,9 @@ export const getAllStores = catchError(async (req, res, next) => {
   res.status(200).json({
     message: "Success",
     totalStores,
-    totalPages: Math.ceil(totalStores / limit),
-    currentPage: parseInt(page),
+    totalPages:
+      all === "true" || limit === "all" ? 1 : Math.ceil(totalStores / limit),
+    currentPage: all === "true" || limit === "all" ? 1 : parseInt(page),
     stores: storesWithCounts,
   });
 });

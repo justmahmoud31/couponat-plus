@@ -14,15 +14,28 @@ export const updateCoupon = catchError(async (req, res, next) => {
     return res.status(404).json({ message: "Coupon not found" });
   }
 
-  if (req.file) {
+  if (req.files?.image && req.files.image[0]) {
     if (coupon.image) {
       const oldImagePath = path.join(process.cwd(), coupon.image);
       if (fs.existsSync(oldImagePath)) {
         await fs.unlink(oldImagePath);
       }
     }
-    updateData.image = `uploads/coupons/${req.file.filename}`;
+    updateData.image = req.files.image[0].path;
   }
+
+  // Handle cover_image file upload
+  if (req.files?.cover_image && req.files.cover_image[0]) {
+    // Delete old cover_image if it exists
+    if (coupon.cover_image) {
+      const oldCoverImagePath = path.join(process.cwd(), coupon.cover_image);
+      if (fs.existsSync(oldCoverImagePath)) {
+        await fs.unlink(oldCoverImagePath);
+      }
+    }
+    updateData.cover_image = req.files.cover_image[0].path;
+  }
+
   if (updateData.category_id) {
     let categories;
 

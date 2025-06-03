@@ -12,26 +12,31 @@ export const getSidebarAds = catchError(async (req, res, next) => {
   }
 
   filter.$or = [
-    { startDate: { $exists: false }, endDate: { $exists: false } },
+    {
+      $and: [
+        { $or: [{ startDate: null }, { startDate: { $exists: false } }] },
+        { $or: [{ endDate: null }, { endDate: { $exists: false } }] },
+      ],
+    },
     {
       startDate: { $lte: currentDate },
       endDate: { $gte: currentDate },
     },
     {
       startDate: { $lte: currentDate },
-      endDate: { $exists: false },
+      $or: [{ endDate: null }, { endDate: { $exists: false } }],
     },
     {
-      startDate: { $exists: false },
+      $or: [{ startDate: null }, { startDate: { $exists: false } }],
       endDate: { $gte: currentDate },
     },
   ];
 
   if (page) {
-    filter.$or.push(
-      { showOnPages: { $size: 0 } },
-      { showOnPages: { $in: [page] } }
-    );
+    filter.$and = filter.$and || [];
+    filter.$and.push({
+      $or: [{ showOnPages: { $size: 0 } }, { showOnPages: { $in: [page] } }],
+    });
   }
 
   const sidebarAds = await SidebarAd.find(filter).sort({ order: 1 });

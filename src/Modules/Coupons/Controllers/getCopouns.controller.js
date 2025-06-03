@@ -118,12 +118,41 @@ const getCouponBySlug = catchError(async (req, res, next) => {
     .populate("store_id");
 
   if (!couponDoc) {
-    return next(new AppError("Coupon not found or Invalid Id", 400));
+    return next(new AppError("Coupon not found or Invalid slug", 400));
   }
 
   const coupon = couponDoc.toObject();
-
   coupon.categories = coupon.category_id;
+
+  const relatedQuery = {
+    _id: { $ne: coupon._id },
+    isActive: true,
+    isDeleted: false,
+    $or: [],
+  };
+
+  if (coupon.category_id && coupon.category_id.length > 0) {
+    const categoryIds = coupon.category_id.map((cat) => cat._id);
+    relatedQuery.$or.push({ category_id: { $in: categoryIds } });
+  }
+
+  if (coupon.store_id && coupon.store_id._id) {
+    relatedQuery.$or.push({ store_id: coupon.store_id._id });
+  }
+
+  const relatedCoupons =
+    relatedQuery.$or.length > 0
+      ? await Coupon.find(relatedQuery)
+          .populate("category_id")
+          .populate("store_id")
+          .limit(6)
+      : [];
+
+  coupon.relatedCoupons = relatedCoupons.map((relCoupon) => {
+    const plainRelCoupon = relCoupon.toObject();
+    plainRelCoupon.categories = plainRelCoupon.category_id;
+    return plainRelCoupon;
+  });
 
   res.status(200).json({
     message: "Coupon found successfully",
